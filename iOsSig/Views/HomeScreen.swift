@@ -1,180 +1,175 @@
 import SwiftUI
+import Combine
 
 struct HomeScreen: View {
     @EnvironmentObject var settings: SettingsManager
+    @StateObject private var viewModel = HomeViewModel() // Integrate HomeViewModel
     
     let version: String
     let requestCode: String
     
-    // MARK: - Animation States
-    @State private var scaleAnimation: CGFloat = 1.0
-    @State private var rotateAnimation: Double = 0.0
-    @State private var backgroundColorFraction: Double = 0.0
-    @State private var particleOffset: Double = 0.0
-    
-    // MARK: - Image Carousel States
-    @State private var currentImageIndex: Int = 0
-    @State private var imageAlpha: Double = 1.0
-    private let imageResources: [String] = ["ads1", "ads4", "ads6", "ads2", "ads3"]
-    private let imageSwitchInterval: TimeInterval = 3.0
-    private let fadeDuration: TimeInterval = 0.5
-    
     var body: some View {
-        ZStack {
-            backgroundLayer
-            logoLayer
-            imageCarousel
-            infoOverlay
+        NavigationView { // Added NavigationView for better structure
+            ScrollView {
+                VStack(spacing: 20) {
+                    headerSection
+                    
+                    if viewModel.isLoading {
+                        ProgressView("Cargando datos...")
+                            .progressViewStyle(CircularProgressViewStyle(tint: .red))
+                            .scaleEffect(1.2)
+                            .padding(.vertical, 50)
+                    } else if let error = viewModel.error {
+                        ErrorView(errorMessage: error) {
+                            viewModel.fetchSalesData() // Retry action
+                        }
+                    } else {
+                        summaryCards
+                    }
+                    
+                    infoOverlay
+                }
+                .padding(.top)
+            }
+            .background(Color.white.ignoresSafeArea()) // Clean background
+            .navigationTitle("")
+            .navigationBarHidden(true)
+            .refreshable { // Add pull-to-refresh
+                viewModel.fetchSalesData()
+            }
         }
-        .onAppear(perform: startAnimations)
     }
     
     // MARK: - View Components
     
-    private var backgroundLayer: some View {
-        interpolatedBackgroundColor
-            .ignoresSafeArea()
+    private var headerSection: some View {
+        VStack(spacing: 10) {
+            Image("logocmpc")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 150, height: 150)
+        }
     }
     
-    private var logoLayer: some View {
-        Image("logocmpc")
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .scaleEffect(0.60)
-            .offset(y: sin(particleOffset * .pi / 180) * 50)
-            .rotationEffect(.degrees(rotateAnimation))
-    }
-    
-    private var imageCarousel: some View {
-        Image(imageResources[currentImageIndex])
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .opacity(imageAlpha)
-            .transition(.opacity)
+    private var summaryCards: some View {
+        VStack(spacing: 15) {
+            Text("Resumen de Ventas")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.primary)
+                .padding(.horizontal)
+            
+            HStack {
+                SummaryCard(title: "Monto Final", value: viewModel.totalMontoFinal, format: .currency)
+                SummaryCard(title: "Transacciones", value: Double(viewModel.totalTransacciones), format: .number)
+            }
+            HStack {
+                SummaryCard(title: "Facturas", value: Double(viewModel.totalFacturas), format: .number)
+                SummaryCard(title: "Ingresos", value: viewModel.totalMontoIngreso, format: .currency)
+            }
+            HStack {
+                SummaryCard(title: "Egresos", value: viewModel.totalMontoEgreso, format: .currency)
+                SummaryCard(title: "Notas Crédito", value: viewModel.totalNotasCredito, format: .currency)
+            }
+        }
+        .padding(.horizontal)
     }
     
     private var infoOverlay: some View {
         VStack {
-            Spacer()
+            Spacer() // Pushes content to the top
             HStack {
-                Spacer()
-                infoPanel
+                Spacer() // Pushes content to the right
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("CITYMALL DAVID")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.gray)
+                    
+                    infoText("Licencia: \(requestCode)", size: .caption2)
+                    infoText("Device: \(settings.userRole.rawValue)", size: .caption2)
+                    infoText("Version: \(version)", size: .caption2)
+                }
+                .padding(.trailing, 16)
+                .padding(.bottom, 10)
             }
         }
-    }
-    
-    private var infoPanel: some View {
-        VStack(alignment: .trailing, spacing: 4) {
-            Text("CITYMALL DAVID")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.red)
-                .scaleEffect(scaleAnimation)
-            
-            infoText("Licencia: \(requestCode)", size: 8)
-            infoText("Device: \(settings.userRole.rawValue)", size: 10)
-            infoText("Version: \(version)", size: 10)
-        }
-        .padding(.trailing, 16)
-        .padding(.bottom, 24)
     }
     
     // MARK: - Helper Views
     
-    private func infoText(_ text: String, size: CGFloat) -> some View {
+    private func infoText(_ text: String, size: Font) -> some View {
         Text(text)
-            .font(.system(size: size, weight: .semibold))
-            .foregroundColor(.red)
-    }
-    
-    private var interpolatedBackgroundColor: Color {
-        let startColor = Color(red: 0xFF / 255.0, green: 0xFA / 255.0, blue: 0xF6 / 255.0)
-        let endColor = Color(red: 0xF8 / 255.0, green: 0xF4 / 255.0, blue: 0xF4 / 255.0)
-        return lerp(start: startColor, end: endColor, fraction: backgroundColorFraction)
-    }
-    
-    // MARK: - Animations Setup
-    
-    private func startAnimations() {
-        startScaleAnimation()
-        startRotateAnimation()
-        startBackgroundAnimation()
-        startParallaxAnimation()
-        startImageCarousel()
-    }
-    
-    private func startScaleAnimation() {
-        withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
-            scaleAnimation = 1.1
-        }
-    }
-    
-    private func startRotateAnimation() {
-        withAnimation(.linear(duration: 5.0).repeatForever(autoreverses: false)) {
-            rotateAnimation = 360.0
-        }
-    }
-    
-    private func startBackgroundAnimation() {
-        withAnimation(.linear(duration: 5.0).repeatForever(autoreverses: true)) {
-            backgroundColorFraction = 1.0
-        }
-    }
-    
-    private func startParallaxAnimation() {
-        withAnimation(.linear(duration: 3.0).repeatForever(autoreverses: false)) {
-            particleOffset = 360.0
-        }
-    }
-    
-    private func startImageCarousel() {
-        Timer.scheduledTimer(withTimeInterval: imageSwitchInterval, repeats: true) { _ in
-            fadeOutAndSwitchImage()
-        }
-    }
-    
-    private func fadeOutAndSwitchImage() {
-        withAnimation(.easeInOut(duration: fadeDuration)) {
-            imageAlpha = 0.0
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + fadeDuration) {
-            currentImageIndex = (currentImageIndex + 1) % imageResources.count
-            
-            withAnimation(.easeInOut(duration: fadeDuration)) {
-                imageAlpha = 1.0
-            }
-        }
-    }
-    
-    // MARK: - Color Interpolation
-    
-    private func lerp(start: Color, end: Color, fraction: Double) -> Color {
-        let startComps = start.components
-        let endComps = end.components
-        
-        let red = startComps.red + (endComps.red - startComps.red) * fraction
-        let green = startComps.green + (endComps.green - startComps.green) * fraction
-        let blue = startComps.blue + (endComps.blue - startComps.blue) * fraction
-        let opacity = startComps.opacity + (endComps.opacity - startComps.opacity) * fraction
-        
-        return Color(red: red, green: green, blue: blue, opacity: opacity)
+            .font(size)
+            .foregroundColor(.gray)
     }
 }
 
-// MARK: - Extensions
+// MARK: - Sub-Views
 
-extension Color {
-    var components: (red: Double, green: Double, blue: Double, opacity: Double) {
-        var r: CGFloat = 0
-        var g: CGFloat = 0
-        var b: CGFloat = 0
-        var a: CGFloat = 0
-        
-        guard UIColor(self).getRed(&r, green: &g, blue: &b, alpha: &a) else {
-            return (0, 0, 0, 1)
+struct SummaryCard: View {
+    let title: String
+    let value: Double
+    let format: ValueFormat
+    
+    enum ValueFormat {
+        case currency
+        case number
+    }
+    
+    var formattedValue: String {
+        switch format {
+        case .currency:
+            return value.formatted(.currency(code: "USD")) // Assuming USD, adjust as needed
+        case .number:
+            return String(format: "%.0f", value)
         }
-        
-        return (Double(r), Double(g), Double(b), Double(a))
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text(title)
+                .font(.headline)
+                .foregroundColor(.secondary)
+            Text(formattedValue)
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.primary)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white)
+        .cornerRadius(10)
+        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+    }
+}
+
+struct ErrorView: View {
+    let errorMessage: String
+    let retryAction: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.largeTitle)
+                .foregroundColor(.orange)
+            Text("Error al cargar datos")
+                .font(.headline)
+            Text(errorMessage)
+                .font(.subheadline)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.secondary)
+            Button("Reintentar") {
+                retryAction()
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.red)
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(10)
+        .shadow(radius: 5)
+        .padding(.horizontal)
     }
 }
 
@@ -186,3 +181,4 @@ struct HomeScreen_Previews: PreviewProvider {
             .environmentObject(SettingsManager.shared)
     }
 }
+
