@@ -56,6 +56,16 @@ struct MainView: View {
                         .toolbar {
                             // Agrupamos los botones de la barra de navegación
                             ToolbarItemGroup(placement: .navigationBarTrailing) {
+                                // Botón de Menú
+                                AppMenuView(
+                                    showAboutAlert: $showAboutAlert,
+                                    navigateToCreateProduct: $navigateToCreateProduct,
+                                    navigateToSyncProducts: $navigateToSyncProducts,
+                                    navigateToOfflineProducts: $navigateToOfflineProducts,
+                                    navigateToLogs: $navigateToLogs,
+                                    navigateToCambioPrecio: $navigateToCambioPrecio
+                                )
+
                                 // Botón de Configuración
                                 Button(action: { showSettings = true }) {
                                     Image(systemName: "gearshape.fill")

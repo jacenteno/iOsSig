@@ -33,20 +33,36 @@ struct SettingsView: View {
 
     // Vista para la entrada de la contraseña
     private var authenticationView: some View {
-        VStack(spacing: 20) {
-            Text("Ingrese la clave maestra para acceder.")
+        VStack(spacing: 16) {
+            Image(systemName: "lock.shield.fill")
+                .font(.system(size: 50))
+                .foregroundColor(.accentColor)
+                .padding(.bottom)
+            
+            Text("Acceso Restringido")
+                .font(.title2)
+                .fontWeight(.bold)
+
+            Text("Ingrese la clave maestra para continuar.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+
             SecureField("Clave", text: $passwordInput)
                 .keyboardType(.numberPad)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .textFieldStyle(.roundedBorder)
                 .padding(.horizontal)
-            
+                .frame(maxWidth: 280)
+
             if let errorMessage = errorMessage {
                 Text(errorMessage)
                     .foregroundColor(.red)
                     .font(.caption)
+                    .padding(.horizontal)
             }
             
-            Button("Aceptar") {
+            Button(action: {
                 if passwordInput == masterPassword {
                     withAnimation {
                         isMasterAuthenticated = true
@@ -56,8 +72,19 @@ struct SettingsView: View {
                     errorMessage = "Clave incorrecta."
                 }
                 passwordInput = ""
+            }) {
+                HStack {
+                    Spacer()
+                    Text("Aceptar")
+                        .fontWeight(.semibold)
+                    Spacer()
+                }
             }
-            .padding()
+            .tint(.accentColor)
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .frame(maxWidth: 280)
+            .padding(.top)
         }
         .padding()
     }
@@ -66,81 +93,141 @@ struct SettingsView: View {
     private var settingsForm: some View {
         Form {
             Section(header: Text("Configuración de APIs")) {
-                HStack {
-                    Text("URL de Productos")
-                    Spacer()
-                    TextField("", text: $settings.productApiUrl).keyboardType(.URL)
+                Label {
+                    TextField("URL de Productos", text: $settings.productApiUrl)
+                        .multilineTextAlignment(.trailing)
+                        .keyboardType(.URL)
+                        .autocapitalization(.none)
+                } icon: {
+                    Image(systemName: "shippingbox.circle.fill")
                 }
-                HStack {
-                    Text("URL de Clientes")
-                    Spacer()
-                    TextField("", text: $settings.clientApiUrl).keyboardType(.URL)
+
+                Label {
+                    TextField("URL de Clientes", text: $settings.clientApiUrl)
+                        .multilineTextAlignment(.trailing)
+                        .keyboardType(.URL)
+                        .autocapitalization(.none)
+                } icon: {
+                    Image(systemName: "person.2.circle.fill")
                 }
-                HStack {
-                    Text("URL Citymall DAVID")
-                    Spacer()
-                    TextField("", text: $settings.citymallApiUrl).keyboardType(.URL)
+
+                Label {
+                    TextField("URL Citymall DAVID", text: $settings.citymallApiUrl)
+                        .multilineTextAlignment(.trailing)
+                        .keyboardType(.URL)
+                        .autocapitalization(.none)
+                } icon: {
+                    Image(systemName: "d.circle.fill")
                 }
-                HStack {
-                    Text("URL Citymall FRONTERA")
-                    Spacer()
-                    TextField("", text: $settings.citymallFronteraApiUrl).keyboardType(.URL)
+
+                Label {
+                    TextField("URL Citymall FRONTERA", text: $settings.citymallFronteraApiUrl)
+                        .multilineTextAlignment(.trailing)
+                        .keyboardType(.URL)
+                        .autocapitalization(.none)
+                } icon: {
+                    Image(systemName: "f.circle.fill")
                 }
-                Toggle("Usar API Anterior", isOn: $settings.useOldApi)
+
+                Toggle(isOn: $settings.useOldApi) {
+                    Label("Usar API Anterior", systemImage: "arrow.left.arrow.right")
+                }
             }
             
             Section(header: Text("Configuración de Tienda")) {
-                HStack {
-                    Text("Cód. Compañía")
-                    Spacer()
-                    TextField("", value: $settings.companyCode, formatter: NumberFormatter()).keyboardType(.numberPad)
+                Label {
+                    TextField("Compañía", value: $settings.companyCode, formatter: NumberFormatter())
+                        .multilineTextAlignment(.trailing)
+                        .keyboardType(.numberPad)
+                } icon: {
+                    Image(systemName: "building.2.fill")
                 }
-                TextField("Cód. Bodega", text: $settings.warehouseCode)
-                HStack {
-                    Text("Nivel Precio")
-                    Spacer()
-                    TextField("", value: $settings.precioCode, formatter: NumberFormatter()).keyboardType(.numberPad)
+
+                Label {
+                    TextField("Bodega", text: $settings.warehouseCode)
+                        .multilineTextAlignment(.trailing)
+                        .autocapitalization(.allCharacters)
+                } icon: {
+                    Image(systemName: "archivebox.circle.fill")
                 }
-                HStack {
-                    Text("Nº Operador")
-                    Spacer()
-                    TextField("", value: $settings.operadorCode, formatter: NumberFormatter()).keyboardType(.numberPad)
+
+                Label {
+                    TextField("Precio", value: $settings.precioCode, formatter: NumberFormatter())
+                        .multilineTextAlignment(.trailing)
+                        .keyboardType(.numberPad)
+                } icon: {
+                    Image(systemName: "dollarsign.circle.fill")
+                }
+
+                Label {
+                    TextField("Operador", value: $settings.operadorCode, formatter: NumberFormatter())
+                        .multilineTextAlignment(.trailing)
+                        .keyboardType(.numberPad)
+                } icon: {
+                    Image(systemName: "person.badge.key.fill")
                 }
             }
             
             Section(header: Text("Configuración de Impresora")) {
-                Picker("Tipo de Conexión", selection: $settings.printerConnectionType) {
+                Picker(selection: $settings.printerConnectionType) {
                     ForEach(SettingsManager.PrinterConnectionType.allCases, id: \.self) {
                         Text($0.rawValue)
                     }
+                } label: {
+                    Label("Tipo de Conexión", systemImage: "printer.fill")
                 }
+
                 if settings.printerConnectionType == .wifi {
-                    TextField("Dirección IP", text: $settings.printerIpAddress).keyboardType(.URL)
-                    TextField("Puerto", text: $settings.printerPort).keyboardType(.numberPad)
+                    Label {
+                        TextField("192.168.1.100", text: $settings.printerIpAddress)
+                            .multilineTextAlignment(.trailing)
+                            .keyboardType(.URL)
+                            .autocapitalization(.none)
+                    } icon: {
+                        Image(systemName: "wifi")
+                    }
+                    Label {
+                        TextField("9100", text: $settings.printerPort)
+                            .multilineTextAlignment(.trailing)
+                            .keyboardType(.numberPad)
+                    } icon: {
+                        Image(systemName: "point.3.connected.trianglepath.dotted")
+                    }
                 }
                 if settings.printerConnectionType == .bluetooth {
-                    TextField("Dirección MAC", text: $settings.printerMacAddress)
+                    Label {
+                        TextField("00:11:22:33:44:55", text: $settings.printerMacAddress)
+                            .multilineTextAlignment(.trailing)
+                            .autocapitalization(.allCharacters)
+                    } icon: {
+                        Image(systemName: "b.circle.fill")
+                    }
                 }
             }
             
             Section(header: Text("Rol del Dispositivo")) {
-                Picker("Rol", selection: $settings.userRole) {
+                Picker(selection: $settings.userRole) {
                     ForEach(UserRole.allCases, id: \.self) {
                         Text($0.rawValue.capitalized)
                     }
+                } label: {
+                    Label("Rol", systemImage: "person.text.rectangle.fill")
                 }
             }
-            
-            // El botón de guardar está implícito, los cambios se guardan automáticamente
-            // gracias a @Published y didSet en SettingsManager.
-            // Podríamos añadir un botón explícito si se prefiere reiniciar la app.
+
             Section {
-                Button("Guardar y Reiniciar") {
-                    // Aquí se podría llamar a una función que reinicie el estado de la app
+                Button(action: {
                     settings.restartApp()
-                    presentationMode.wrappedValue.dismiss() // Cierra la vista de configuración
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    HStack {
+                        Spacer()
+                        Text("Guardar y Reiniciar")
+                            .fontWeight(.semibold)
+                        Spacer()
+                    }
                 }
-                .foregroundColor(.blue)
+                .tint(.accentColor)
             }
         }
     }

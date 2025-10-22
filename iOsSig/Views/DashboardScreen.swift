@@ -34,21 +34,8 @@ struct DashboardScreen: View {
                     }
                 } else {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 24) {
-                            // Header
-                            VStack(alignment: .leading) {
-                                Text("Dashboard")
-                                    .font(.largeTitle)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.red)
-                                Text("Resumen de Ventas del Día")
-                                    .font(.body)
-                                    .foregroundColor(.gray)
-                                Text("Próximo refresco en: \(refreshCountdown)s")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                            .padding(.horizontal)
+                        VStack(alignment: .leading) {
+                            // The header is now handled by the standard navigation bar.
 
                             // Stats Grid
                             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
@@ -131,7 +118,6 @@ struct DashboardScreen: View {
                 }
             }
             .navigationTitle("Dashboard")
-            .navigationBarHidden(true) // Hide default navigation bar
         }
         .onAppear {
             // The ViewModel now handles its own initial fetch
