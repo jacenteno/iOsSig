@@ -18,18 +18,29 @@ struct DashboardScreen: View {
                 if viewModel.isLoading && viewModel.ventaPorGrupoCaja.isEmpty {
                     ProgressView()
                 } else if let error = viewModel.error {
-                    VStack {
-                        Image(systemName: "cloud.slash.fill")
-                            .font(.largeTitle)
-                            .foregroundColor(.red)
-                        Text("Error al cargar los datos")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        Text(error)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                        Button("Reintentar") {
-                            viewModel.fetchSalesData()
+                    if !viewModel.products.isEmpty {
+                        List(viewModel.products) { product in
+                            VStack(alignment: .leading) {
+                                Text(product.desproducto ?? "Nombre no disponible")
+                                    .font(.headline)
+                                Text("Código: \(product.codproducto ?? "N/A")")
+                                    .font(.subheadline)
+                            }
+                        }
+                    } else {
+                        VStack {
+                            Image(systemName: "exclamationmark.icloud.fill")
+                                .font(.largeTitle)
+                                .foregroundColor(.red)
+                            Text("Error al cargar los datos")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                            Text(error)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                            Button("Reintentar") {
+                                viewModel.fetchSalesData()
+                            }
                         }
                     }
                 } else {
@@ -40,11 +51,11 @@ struct DashboardScreen: View {
                             // Stats Grid
                             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                                 StatCardImproved(title: "Transacciones", value: String(viewModel.totalTransacciones), icon: "arrow.left.arrow.right", iconColor: .customOrange)
-                                StatCardImproved(title: "Total Ventas", value: String(viewModel.totalFacturas), icon: "doc.text", iconColor: .customPrimary)
+                                StatCardImproved(title: "Total Tickets", value: String(viewModel.totalTickets), icon: "doc.text", iconColor: .customPrimary)
                                 StatCardImproved(title: "Ingresos", value: String(format: "$%.2f", viewModel.totalMontoIngreso), icon: "arrow.up.right", iconColor: .customGreen)
                                 StatCardImproved(title: "Egresos", value: String(format: "$%.2f", viewModel.totalMontoEgreso), icon: "arrow.down.left", iconColor: .customError)
                                 StatCardImproved(title: "Descuentos", value: String(format: "$%.2f", viewModel.finalDescuento), icon: "tag.fill", iconColor: .customDeepPurple)
-                                StatCardImproved(title: "N. Crédito", value: String(format: "$%.2f", viewModel.totalNotasCredito), icon: "creditcard.fill", iconColor: .customTeal)
+                                StatCardImproved(title: "N. Crédito", value: String(format: "$%.2f", viewModel.totalMontoNotaCredito), icon: "creditcard.fill", iconColor: .customTeal)
                             }
                             .padding(.horizontal)
 
@@ -105,6 +116,27 @@ struct DashboardScreen: View {
                                         }
                                     }
                                 }
+                                .frame(height: 250)
+                            }
+                            .padding(.horizontal)
+
+                            // New Chart: Ventas por Caja (Pie Chart)
+                            ChartCard(title: "Ventas por Caja (Monto)") {
+                                Chart(viewModel.allCashRegistersForChart) { register in
+                                    SectorMark(
+                                        angle: .value("Monto", register.monto),
+                                        innerRadius: 60,
+                                        outerRadius: 100
+                                    )
+                                    .foregroundStyle(by: .value("Caja", register.nombre))
+                                    .annotation(position: .overlay) {
+                                        Text(String(format: "%.0f", register.monto))
+                                            .font(.caption)
+                                            .bold()
+                                            .foregroundColor(.white)
+                                    }
+                                }
+                                .chartLegend(position: .bottom, alignment: .center)
                                 .frame(height: 250)
                             }
                             .padding(.horizontal)

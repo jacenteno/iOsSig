@@ -17,7 +17,9 @@ class SettingsManager: ObservableObject {
         static let citymallFronteraApiUrl = "citymallFronteraApiUrl"
         static let useOldApi = "useOldApi"
         static let companyCode = "companyCode"
+        static let companyName = "companyName"
         static let warehouseCode = "warehouseCode"
+     
         static let precioCode = "precioCode"
         static let operadorCode = "operadorCode"
         static let userRole = "userRole"
@@ -47,6 +49,9 @@ class SettingsManager: ObservableObject {
     @Published var companyCode: Int {
         didSet { defaults.set(companyCode, forKey: Keys.companyCode) }
     }
+    @Published var companyName: String {
+        didSet { defaults.set(companyName, forKey: Keys.companyName) }
+    }
     @Published var warehouseCode: String {
         didSet { defaults.set(warehouseCode, forKey: Keys.warehouseCode) }
     }
@@ -56,7 +61,7 @@ class SettingsManager: ObservableObject {
     @Published var operadorCode: Int {
         didSet { defaults.set(operadorCode, forKey: Keys.operadorCode) }
     }
-    @Published var userRole: UserRole {
+    @Published var userRole: AppUserRole { // Changed type to AppUserRole
         didSet { defaults.set(userRole.rawValue, forKey: Keys.userRole) }
     }
     @Published var isActivated: Bool {
@@ -91,10 +96,11 @@ class SettingsManager: ObservableObject {
         self.citymallFronteraApiUrl = defaults.string(forKey: Keys.citymallFronteraApiUrl) ?? "http://10.10.10.1:3001/"
         self.useOldApi = defaults.bool(forKey: Keys.useOldApi)
         self.companyCode = defaults.object(forKey: Keys.companyCode) as? Int ?? 6
-        self.warehouseCode = defaults.string(forKey: Keys.warehouseCode) ?? "B03"
+        self.companyName = defaults.string(forKey: Keys.companyName) ?? "CitMall David"
+        self.warehouseCode = defaults.string(forKey: Keys.warehouseCode) ?? "03"
         self.precioCode = defaults.object(forKey: Keys.precioCode) as? Int ?? 1
         self.operadorCode = defaults.object(forKey: Keys.operadorCode) as? Int ?? 1
-        self.userRole = UserRole(rawValue: defaults.string(forKey: Keys.userRole) ?? "FULL_ACCESS") ?? .fullAccess
+        self.userRole = AppUserRole(rawValue: defaults.string(forKey: Keys.userRole) ?? AppUserRole.ROL_0.rawValue) ?? .ROL_0 // Updated to use AppUserRole
         self.isActivated = defaults.bool(forKey: Keys.isActivated)
 
         self.printerConnectionType = PrinterConnectionType(rawValue: defaults.string(forKey: Keys.printerConnectionType) ?? "None") ?? .none

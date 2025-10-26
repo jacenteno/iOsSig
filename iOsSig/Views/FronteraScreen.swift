@@ -2,7 +2,7 @@ import SwiftUI
 
 struct FronteraScreen: View {
     var body: some View {
-        Text("Pantalla de Frontera")
+        Text("Pronto Api Old..")
             .font(.largeTitle)
             .navigationTitle("Frontera")
     }

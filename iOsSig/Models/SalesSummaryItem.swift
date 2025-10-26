@@ -1,7 +1,7 @@
 import Foundation
 
 struct SalesSummaryItem: Decodable, Identifiable {
-    let id = UUID()
+    let id = UUID() // Add id for Identifiable conformance
     let nombre: String
     let transacciones: Int
     let monto: Double

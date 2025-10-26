@@ -1,102 +1,158 @@
 import SwiftUI
 import Combine
 
+
 struct HomeScreen: View {
+    @StateObject private var viewModel = HomeViewModel()
     @EnvironmentObject var settings: SettingsManager
-    @StateObject private var viewModel = HomeViewModel() // Integrate HomeViewModel
     
     let version: String
     let requestCode: String
+   
+    
+    private let gridColumns = [GridItem(.flexible()), GridItem(.flexible())]
     
     var body: some View {
-        NavigationView { // Added NavigationView for better structure
+        let role = settings.userRole
+        let store=settings.$companyName
+        NavigationView {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 16) {
                     headerSection
+                        .padding(.horizontal)
+                    headerUsuario
+                        .padding(.horizontal)
+                    headerStore
+                        .padding(.horizontal)
                     
-                    if viewModel.isLoading {
-                        ProgressView("Cargando datos...")
-                            .progressViewStyle(CircularProgressViewStyle(tint: .red))
-                            .scaleEffect(1.2)
-                            .padding(.vertical, 50)
-                    } else if let error = viewModel.error {
-                        ErrorView(errorMessage: error) {
-                            viewModel.fetchSalesData() // Retry action
+                    if role.hasPermission("VIEW_DASHBOARD") {
+                        if viewModel.isLoading {
+                            ProgressView("Cargando...")
+                                .progressViewStyle(CircularProgressViewStyle(tint: .red))
+                                .scaleEffect(1.2)
+                                .padding(.vertical, 50)
+                        } else if let error = viewModel.error {
+                            ErrorView(errorMessage: error) {
+                                viewModel.fetchSalesData()
+                            }
+                            .padding(.horizontal)
+                        } else {
+                            summaryHeaderSection.padding(.horizontal)
+                            summaryGrid
+                                .padding(.horizontal)
                         }
-                    } else {
-                        summaryCards
+                        
                     }
                     
+                    
+                    Spacer() // Pushes the info overlay to the bottom
+                    
                     infoOverlay
+                        .padding(.horizontal)
                 }
-                .padding(.top)
+                .padding(.vertical)
             }
-            .background(Color.white.ignoresSafeArea()) // Clean background
-            .navigationTitle("")
-            .navigationBarHidden(true)
-            .refreshable { // Add pull-to-refresh
+            .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
+            .navigationTitle("Resumen de Ventas de hoy")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Image("sig")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 50)
+                }
+            }
+            .refreshable {
                 viewModel.fetchSalesData()
             }
         }
+        .navigationViewStyle(StackNavigationViewStyle()) // Use stack style for a more standard appearance
     }
     
-    // MARK: - View Components
-    
     private var headerSection: some View {
-        VStack(spacing: 10) {
-            Image("logocmpc")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 150, height: 150)
+        
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Bienvenido")
+                    .font(.largeTitle)
+                    .foregroundColor(.secondary)
+              
+            
+            }
+           // Spacer()
+            // You can add a settings button or other actions here if needed
         }
     }
     
-    private var summaryCards: some View {
-        VStack(spacing: 15) {
-            Text("Resumen de Ventas")
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
-                .padding(.horizontal)
+    private var headerUsuario: some View {
+        
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                infoText("Usuario: \(settings.userRole)", size: .caption2)
+           
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top, 10)
             
-            HStack {
-                SummaryCard(title: "Monto Final", value: viewModel.totalMontoFinal, format: .currency)
-                SummaryCard(title: "Transacciones", value: Double(viewModel.totalTransacciones), format: .number)
+           
+        }
+    }
+    private var headerStore: some View {
+        
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                infoText("Tienda: \(settings.companyName)", size: .caption2)
+           
             }
-            HStack {
-                SummaryCard(title: "Facturas", value: Double(viewModel.totalFacturas), format: .number)
-                SummaryCard(title: "Ingresos", value: viewModel.totalMontoIngreso, format: .currency)
+            .frame(maxWidth: .infinity)
+            .padding(.top, 10)
+            
+           
+        }
+    }
+    
+    
+    private var summaryHeaderSection: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Resumen de Ventas de Hoy")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+                    .fontWeight(.semibold)
+                
             }
-            HStack {
-                SummaryCard(title: "Egresos", value: viewModel.totalMontoEgreso, format: .currency)
-                SummaryCard(title: "Notas Crédito", value: viewModel.totalNotasCredito, format: .currency)
-            }
+            Spacer()
         }
         .padding(.horizontal)
     }
     
-    private var infoOverlay: some View {
-        VStack {
-            Spacer() // Pushes content to the top
-            HStack {
-                Spacer() // Pushes content to the right
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("CITYMALL DAVID")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.gray)
-                    
-                    infoText("Licencia: \(requestCode)", size: .caption2)
-                    infoText("Device: \(settings.userRole.rawValue)", size: .caption2)
-                    infoText("Version: \(version)", size: .caption2)
-                }
-                .padding(.trailing, 16)
-                .padding(.bottom, 10)
-            }
+    private var summaryGrid: some View {
+        LazyVGrid(columns: gridColumns, spacing: 16) {
+            SummaryCard(title: "Total Final hoy ", value: viewModel.totalMontoFinal, icon: "dollarsign.circle.fill", format: .currency, color: .green)
+            SummaryCard(title: "Transacciones", value: Double(viewModel.totalTransacciones), icon: "arrow.2.squarepath", format: .number, color: .blue)
+            SummaryCard(title: "Tickets", value: Double(viewModel.totalTickets), icon: "doc.text.fill", format: .number, color: .orange)
+            SummaryCard(title: "Ventas del Mes", value: viewModel.totalFacturaDelMes, icon: "calendar", format: .currency, color: .purple)
+            SummaryCard(title: "Total Ctes. CityPuntos ", value: Double(viewModel.totalClientes), icon: "person.2.fill", format: .number, color: .pink)
+            SummaryCard(title: "Ingresos", value: viewModel.totalMontoIngreso, icon: "arrow.up.right.circle.fill", format: .currency, color: .cyan)
+            SummaryCard(title: "Egresos", value: viewModel.totalMontoEgreso, icon: "arrow.down.left.circle.fill", format: .currency, color: .red)
+            SummaryCard(title: "Notas Crédito", value: viewModel.totalMontoNotaCredito, icon: "creditcard.fill", format: .currency, color: .gray)
         }
     }
     
-    // MARK: - Helper Views
+    private var infoOverlay: some View {
+        VStack(alignment: .center, spacing: 4) {
+            Text("iOS App")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(.gray)
+            
+            infoText("Licencia: \(requestCode)", size: .caption2)
+            infoText("Version: \(version)", size: .caption2)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 10)
+    }
     
     private func infoText(_ text: String, size: Font) -> some View {
         Text(text)
@@ -105,12 +161,12 @@ struct HomeScreen: View {
     }
 }
 
-// MARK: - Sub-Views
-
 struct SummaryCard: View {
     let title: String
     let value: Double
+    let icon: String
     let format: ValueFormat
+    let color: Color
     
     enum ValueFormat {
         case currency
@@ -120,27 +176,40 @@ struct SummaryCard: View {
     var formattedValue: String {
         switch format {
         case .currency:
-            return value.formatted(.currency(code: "USD")) // Assuming USD, adjust as needed
+            // Format currency with locale-specific settings
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .currency
+            formatter.maximumFractionDigits = 2
+            return formatter.string(from: NSNumber(value: value)) ?? "$0.00"
         case .number:
             return String(format: "%.0f", value)
         }
     }
     
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.title2)
+                    .foregroundColor(color)
+                Spacer()
+            }
+            
             Text(title)
                 .font(.headline)
                 .foregroundColor(.secondary)
+            
             Text(formattedValue)
-                .font(.title2)
-                .fontWeight(.bold)
+                .font(.default)
+                .fontWeight(.medium)
                 .foregroundColor(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8) // Allows text to shrink
         }
         .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
-        .cornerRadius(10)
-        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+        .background(Color(UIColor.secondarySystemGroupedBackground))
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
 }
 
@@ -149,36 +218,35 @@ struct ErrorView: View {
     let retryAction: () -> Void
     
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.largeTitle)
                 .foregroundColor(.orange)
-            Text("Error al cargar datos")
+            Text("Error al Cargar Datos")
                 .font(.headline)
+                .fontWeight(.bold)
             Text(errorMessage)
                 .font(.subheadline)
                 .multilineTextAlignment(.center)
                 .foregroundColor(.secondary)
+                .padding(.horizontal)
             Button("Reintentar") {
                 retryAction()
             }
             .buttonStyle(.borderedProminent)
             .tint(.red)
+            .padding(.top)
         }
         .padding()
-        .background(Color.white)
-        .cornerRadius(10)
-        .shadow(radius: 5)
-        .padding(.horizontal)
+        .background(Color(UIColor.secondarySystemGroupedBackground))
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
 }
-
-// MARK: - Preview
 
 struct HomeScreen_Previews: PreviewProvider {
     static var previews: some View {
-        HomeScreen(version: "1.0", requestCode: "ABC-123")
+        HomeScreen(version: "1.0.0", requestCode: "XYZ-789")
             .environmentObject(SettingsManager.shared)
     }
 }
-

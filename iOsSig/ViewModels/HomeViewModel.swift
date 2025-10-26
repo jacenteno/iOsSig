@@ -5,13 +5,38 @@ class HomeViewModel: ObservableObject {
     @Published var ventaPorGrupoCaja: [String: SalesSummaryItem] = [:]
     @Published var ventaPorHoraGeneral: [String: SalesByHourItem] = [:]
     @Published var ventaPorGrupoCajaDetalle: [String: AreaDetail] = [:]
-    @Published var totalFacturas: Int = 0
+    @Published var totalTickets: Int = 0 // Renamed from totalFacturas
+    @Published var totalFacturaDelMes: Double = 0.0
+    @Published var totalClientes: Int = 0
+    @Published var ventaPorHora: [String: [String: SalesByHourDetailItem]] = [:]
+    @Published var ventaPorCaja: [String: CashRegisterSummaryItem] = [:]
+    @Published var totalesPorCaja2: [String: CashRegisterSummaryItem] = [:]
+    @Published var fechaClarion: Int = 0
+    @Published var fechaWeb: String = ""
+    @Published var ventaNotaDeCredito: [String: VentaNotaDeCreditoItem] = [:]
+    @Published var totalTransaNotaDeCredito: Int = 0
+    @Published var totalCajasNotaDeCredito: Int = 0
     @Published var totalMontoIngreso: Double = 0.0
     @Published var totalMontoEgreso: Double = 0.0
     @Published var totalTransacciones: Int = 0
     @Published var totalMontoFinal: Double = 0.0
+    @Published var ventaIngreso: [String: VentaIngresoItem] = [:]
+    @Published var ventaEgreso: [String: VentaEgresoItem] = [:]
+    @Published var totalTransaEgreso: Int = 0
+    @Published var totalTransaIngreso: Int = 0
+    @Published var totalCajasIngreso: Int = 0
+    @Published var totalCajasEgreso: Int = 0
+    @Published var totalDescuentos: TotalDescuentosItem = TotalDescuentosItem(totalTransacciones: 0, totalDescuento: 0.0)
+    @Published var totalDescuentos2: TotalDescuentos2Item = TotalDescuentos2Item(totalTransacciones: 0, totalDescuento: 0.0)
     @Published var finalDescuento: Double = 0.0
-    @Published var totalNotasCredito: Double = 0.0
+    @Published var totalCajasGrupo: Int = 0
+    @Published var totalTransaccionCajaGrupo: Int = 0
+    @Published var totalMontoCajaGrupo: Double = 0.0
+    @Published var totalCajas: Int = 0
+    @Published var totalTransaccionCaja: Int = 0
+    @Published var totalMontoCaja: Double = 0.0
+    @Published var totalMontoNotaCredito: Double = 0.0 // Renamed from totalNotasCredito
+    @Published var products: [Product] = []
 
     @Published var isLoading: Bool = false
     @Published var error: String? = nil
@@ -34,6 +59,16 @@ class HomeViewModel: ObservableObject {
         ventaPorHoraGeneral.map { hour, item in
             ChartableSalesByHour(hour: hour, amount: item.monto)
         }.sorted { $0.hour < $1.hour }
+    }
+
+    var allCashRegistersForChart: [CashRegisterDetail] {
+        var allRegisters: [CashRegisterDetail] = []
+        for areaDetail in ventaPorGrupoCajaDetalle.values {
+            for registerDetail in areaDetail.cajas.values {
+                allRegisters.append(registerDetail)
+            }
+        }
+        return allRegisters.sorted { $0.nombre < $1.nombre } // Sort by name for consistent chart display
     }
 
     private let apiService: APIService
@@ -78,26 +113,66 @@ class HomeViewModel: ObservableObject {
             do {
                 print("HomeViewModel: Starting API call to get dashboard data...")
                 let salesData = try await apiService.getOnlineSalesData() // Assuming APIService has this method
+               
 
                 DispatchQueue.main.async {
                     self.ventaPorGrupoCaja = salesData.ventaPorGrupoCaja
                     self.ventaPorHoraGeneral = salesData.ventaPorHoraGeneral
                     self.ventaPorGrupoCajaDetalle = salesData.ventaPorGrupoCajaDetalle
-                    self.totalFacturas = salesData.totalFacturas
+                    self.totalTickets = salesData.totalTickets // Renamed
+                    self.totalFacturaDelMes = salesData.totalFacturaDelMes
+                    self.totalClientes = salesData.totalClientes
+                    self.ventaPorHora = salesData.ventaPorHora
+                    self.ventaPorCaja = salesData.ventaPorCaja
+                    self.totalesPorCaja2 = salesData.totalesPorCaja2
+                    self.fechaClarion = salesData.fechaClarion
+                    self.fechaWeb = salesData.fechaWeb
+                    self.ventaNotaDeCredito = salesData.ventaNotaDeCredito
+                    self.totalTransaNotaDeCredito = salesData.totalTransaNotaDeCredito
+                    self.totalCajasNotaDeCredito = salesData.totalCajasNotaDeCredito
                     self.totalMontoIngreso = salesData.totalMontoIngreso
                     self.totalMontoEgreso = salesData.totalMontoEgreso
                     self.totalTransacciones = salesData.totalTransacciones
                     self.totalMontoFinal = salesData.totalMontoFinal
+                    self.ventaIngreso = salesData.ventaIngreso
+                    self.ventaEgreso = salesData.ventaEgreso
+                    self.totalTransaEgreso = salesData.totalTransaEgreso
+                    self.totalTransaIngreso = salesData.totalTransaIngreso
+                    self.totalCajasIngreso = salesData.totalCajasIngreso
+                    self.totalCajasEgreso = salesData.totalCajasEgreso
+                    self.totalDescuentos = salesData.totalDescuentos
+                    self.totalDescuentos2 = salesData.totalDescuentos2
                     self.finalDescuento = salesData.finalDescuento
-                    self.totalNotasCredito = salesData.totalMontoNotaCredito
+                    self.totalCajasGrupo = salesData.totalCajasGrupo
+                    self.totalTransaccionCajaGrupo = salesData.totalTransaccionCajaGrupo
+                    self.totalMontoCajaGrupo = salesData.totalMontoCajaGrupo
+                    self.totalCajas = salesData.totalCajas
+                    self.totalTransaccionCaja = salesData.totalTransaccionCaja
+                    self.totalMontoCaja = salesData.totalMontoCaja
+                   // self.totalMontoNotaCredito = salesData.totalMontoNotaCredito // Renamed
                     self.isLoading = false
                     print("HomeViewModel: Dashboard data received and parsed successfully!")
                 }
             } catch {
+                print("HomeViewModel: Primary API call failed, attempting to fetch products...")
+                fetchProducts()
+            }
+        }
+    }
+    
+    func fetchProducts() {
+        Task {
+            do {
+                let paginatedResponse = try await apiService.getProducts(page: 1)
                 DispatchQueue.main.async {
-                    self.error = "Failed to fetch sales data: \(error.localizedDescription)"
+                    self.products = paginatedResponse.results
                     self.isLoading = false
-                    print("HomeViewModel: Critical failure in API call: \(error)")
+                    self.error = "Fallo al cargar los datos de ventas. Mostrando productos como fallback."
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.error = "Fallo al cargar los datos de ventas y productos."
+                    self.isLoading = false
                 }
             }
         }

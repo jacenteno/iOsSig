@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject var settings: SettingsManager
+   // @EnvironmentObject var settings: SettingsManager
 
     var body: some View {
         //SettingsView().environmentObject(settings)

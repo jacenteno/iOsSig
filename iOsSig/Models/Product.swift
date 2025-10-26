@@ -1,39 +1,38 @@
-
 import Foundation
 
 // Equivalente a la data class Product.kt
 // Conforme a Codable para decodificar JSON y a Identifiable para las listas de SwiftUI.
 struct Product: Codable, Identifiable {
     let id = UUID() // Requerido por Identifiable
-    let codcompania: Int
-    let codbodega: String
-    let coddep: Int
-    let desproducto: String
-    let detalle: String
-    let codigobarra: String
-    let codproducto: String
-    let codproveedor: Int
-    let referencia: String
-    let nombre_departamento: String
-    let ultcosto: Double
-    let existencias: Double
-    let ubicacion: String
-    let ofertas: Int
-    let ucosto: Double
-    let costofob: Double
-    let indexproductos: Int
+    let codcompania: Int?
+    let codbodega: String?
+    let coddep: Int?
+    let desproducto: String?
+    let detalle: String?
+    let codigobarra: String?
+    let codproducto: String?
+    let codproveedor: Int?
+    let referencia: String?
+    let nombre_departamento: String?
+    let ultcosto: Double?
+    let existencias: Double?
+    let ubicacion: String?
+    let ofertas: Int?
+    let ucosto: Double?
+    let costofob: Double?
+    let indexproductos: Int?
     let costooriginal: Double?
-    let preciodeventa: Double
-    let fvencimiento: Int
-    let ctacontable: String
-    let bloqueofacturacion: Int
-    let gravadoexecto: String
-    let prcimpuestoventa: Double
+    let preciodeventa: Double?
+    let fvencimiento: Int?
+    let ctacontable: String?
+    let bloqueofacturacion: Int?
+    let gravadoexecto: String?
+    let prcimpuestoventa: Double?
     let nombre_lista_precio: String?
-    let listas_de_precio: [PriceList]
+    let listas_de_precio: [PriceList]?
     let series_asociadas: SeriesAsociadas?
-    let codigo_consultado: String
-    let lista_referencia: [ReferenciaProducto]
+    let codigo_consultado: String?
+    let lista_referencia: [ReferenciaProducto]?
 
     // Mapeo de claves JSON a propiedades de Swift (si son diferentes)
     enum CodingKeys: String, CodingKey {
@@ -41,24 +40,38 @@ struct Product: Codable, Identifiable {
     }
 }
 
-struct PriceList: Codable {
-    let idlistadeprecio: Int
-    let codgrprecio: Int
-    let codbodega: String
-    let preciodeventa: Double
-    // ... otros campos si son necesarios
-}
-
-struct SeriesAsociadas: Codable {
-    let total_series: Int
-    let series: [String]
-    let tiene_multiples_series: Bool
-}
-
-struct ReferenciaProducto: Codable {
-    let codproducto: String
-    let desproducto: String
-    let codigobarra: String
+extension Product {
+    init(from productos: Productos) {
+        self.codcompania = nil
+        self.codbodega = productos.codbodega
+        self.coddep = productos.coddep
+        self.desproducto = productos.desproducto
+        self.detalle = nil
+        self.codigobarra = productos.codigobarra
+        self.codproducto = productos.codproducto
+        self.codproveedor = nil
+        self.referencia = nil
+        self.nombre_departamento = nil
+        self.ultcosto = nil
+        self.existencias = nil
+        self.ubicacion = nil
+        self.ofertas = nil
+        self.ucosto = nil
+        self.costofob = nil
+        self.indexproductos = nil
+        self.costooriginal = nil
+        self.preciodeventa = nil
+        self.fvencimiento = nil
+        self.ctacontable = nil
+        self.bloqueofacturacion = nil
+        self.gravadoexecto = nil
+        self.prcimpuestoventa = nil
+        self.nombre_lista_precio = nil
+        self.listas_de_precio = nil
+        self.series_asociadas = nil
+        self.codigo_consultado = nil
+        self.lista_referencia = nil
+    }
 }
 
 // Mock para previews de SwiftUI

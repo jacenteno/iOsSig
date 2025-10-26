@@ -142,6 +142,14 @@ struct SettingsView: View {
                 } icon: {
                     Image(systemName: "building.2.fill")
                 }
+                
+                Label {
+                    TextField("Nombre de Tienda", text: $settings.companyName)
+                        .multilineTextAlignment(.trailing)
+                        .autocapitalization(.allCharacters)
+                } icon: {
+                    Image(systemName: "chart.bar.fill")
+                }
 
                 Label {
                     TextField("Bodega", text: $settings.warehouseCode)
@@ -207,7 +215,7 @@ struct SettingsView: View {
             
             Section(header: Text("Rol del Dispositivo")) {
                 Picker(selection: $settings.userRole) {
-                    ForEach(UserRole.allCases, id: \.self) {
+                    ForEach(AppUserRole.allCases, id: \.self) {
                         Text($0.rawValue.capitalized)
                     }
                 } label: {
@@ -222,7 +230,7 @@ struct SettingsView: View {
                 }) {
                     HStack {
                         Spacer()
-                        Text("Guardar y Reiniciar")
+                        Text("Guardar")
                             .fontWeight(.semibold)
                         Spacer()
                     }
