@@ -71,7 +71,12 @@ struct OrdersListScreen: View {
             ProgressView()
         case .loaded(let orders):
             if orders.isEmpty {
-                emptyState
+                EmptyStateView(
+                    systemImage: "shippingbox.circle",
+                    message: "No se encontraron pedidos con los filtros seleccionados.",
+                    retryAction: viewModel.fetchOrders,
+                    retryButtonText: "Refrescar"
+                )
             } else {
                 List(orders) { order in
                     ZStack {
@@ -99,26 +104,6 @@ struct OrdersListScreen: View {
         }
     }
     
-    private var emptyState: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "shippingbox.circle")
-                .font(.system(size: 80))
-                .foregroundColor(.secondary)
-            Text("No hay pedidos")
-                .font(.title2)
-                .fontWeight(.semibold)
-            Text("Cuando crees un pedido, aparecerá aquí.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-            Button("Refrescar") {
-                viewModel.fetchOrders()
-            }
-            .buttonStyle(.borderedProminent)
-        }
-        .padding()
-    }
 }
 
 struct OrderRow: View {

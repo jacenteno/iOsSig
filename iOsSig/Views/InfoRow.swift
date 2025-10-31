@@ -3,7 +3,8 @@ import SwiftUI
 struct InfoRow: View {
     let label: String
     let value: String
-    var valueColor: Color = .secondary
+    var valueTextColor: Color = .secondary
+    var valueTextFont: Font = .subheadline
     var icon: String? = nil
 
     var body: some View {
@@ -15,8 +16,10 @@ struct InfoRow: View {
             }
             Spacer()
             Text(value)
+                .font(valueTextFont)
                 .fontWeight(.medium)
+                .foregroundColor(valueTextColor)
         }
-        .font(.subheadline)
+        .font(.subheadline) // This applies to the label, not the value
     }
 }

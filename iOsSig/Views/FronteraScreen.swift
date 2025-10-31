@@ -1,39 +1,104 @@
 import SwiftUI
 
-struct FronteraScreen: View {
+struct FronteraScreen: View, CameraScannerViewDelegate {
     @StateObject private var viewModel = FronteraViewModel()
+    @State private var isShowingScanner = false
 
     var body: some View {
-        VStack(spacing: 20) {
-            TextField("Ingrese código", text: $viewModel.codigo)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
+        VStack(spacing: 0) {
+            searchHeaderView
                 .padding()
 
-            Button(action: {
-                viewModel.consultarCodigo()
-            }) {
-                Text("Consultar")
-            }
-            .disabled(viewModel.isLoading)
+            contentView
+        }
+        .frame(maxHeight: .infinity, alignment: .top)
+        .background(Color(.systemGray6).ignoresSafeArea())
+        .navigationTitle("Frontera")
+        .sheet(isPresented: $isShowingScanner) {
+            CameraScannerView(delegate: self)
+        }
+    }
 
-            if viewModel.isLoading {
-                ProgressView()
-            }
+    // MARK: - Subviews
 
-            if let errorMessage = viewModel.errorMessage {
-                Text(errorMessage)
-                    .foregroundColor(.red)
-            }
+    private var searchHeaderView: some View {
+        HStack(spacing: 12) {
+            // Search Field
+            HStack {
+                Image(systemName: "magnifyingglass").foregroundColor(.secondary)
+                TextField("Buscar por código...", text: $viewModel.searchQuery, onCommit: {
+                    viewModel.consultarCodigo()
+                })
+                .textFieldStyle(.plain)
 
-            ScrollView {
-                Text(viewModel.responseText)
-                    .padding()
+                if !viewModel.searchQuery.isEmpty {
+                    Button(action: { viewModel.searchQuery = "" }) {
+                        Image(systemName: "xmark.circle.fill").foregroundColor(.secondary)
+                    }
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Color(.systemGray5))
+            .cornerRadius(12)
+
+            // Scanner Button
+            Button(action: { isShowingScanner = true }) {
+                Image(systemName: "barcode.viewfinder")
+                    .font(.title3)
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+                    .background(Color.accentColor)
+                    .cornerRadius(12)
             }
             
-            Spacer()
+            // Clear Button
+            Button(action: { viewModel.clear() }) {
+                Image(systemName: "trash")
+                    .font(.title3)
+                    .foregroundColor(.red)
+                    .frame(width: 44, height: 44)
+                    .background(Color(.systemGray5))
+                    .cornerRadius(12)
+            }
         }
-        .padding()
-        .navigationTitle("Frontera")
+    }
+
+    @ViewBuilder
+    private var contentView: some View {
+        if viewModel.isLoading {
+            Spacer()
+            ProgressView("Consultando...")
+            Spacer()
+        } else if let errorMessage = viewModel.errorMessage {
+            ErrorState(message: errorMessage, onRetry: {
+                viewModel.consultarCodigo()
+            })
+        } else if let resultado = viewModel.resultado {
+            ScrollView {
+                FronteraCardView(resultado: resultado)
+                    .padding()
+            }
+        } else {
+            EmptyStateView(systemImage: "shippingbox.fill", message: "Consulte un código de producto para ver su información de frontera.")
+        }
+    }
+    
+    // MARK: - CameraScannerViewDelegate
+    
+    func didScanBarcode(code: String) {
+        viewModel.searchQuery = code
+        isShowingScanner = false
+        // La consulta se dispara automáticamente gracias al binding con debounce en el ViewModel
+    }
+}
+
+// MARK: - Preview
+struct FronteraScreen_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationView {
+            FronteraScreen()
+        }
     }
 }
 

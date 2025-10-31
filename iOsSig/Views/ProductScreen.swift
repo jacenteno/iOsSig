@@ -2,16 +2,21 @@ import SwiftUI
 import Combine
 
 struct ProductScreen: View, CameraScannerViewDelegate {
-    @StateObject private var viewModel = ProductViewModel()
+    @StateObject private var viewModel: ProductViewModel
     @State private var showFilters = false
     @State private var isShowingScanner = false
     @State private var navigateToCambioPrecio = false
+    @State private var navigateToCreaProducto = false
     @State private var selectedProductCode: String? = nil
     @EnvironmentObject var settings: SettingsManager
     @EnvironmentObject var cartManager: CartManager
     @State private var showError: Bool = false // State to control ErrorView presentation
+
+    init() {
+        _viewModel = StateObject(wrappedValue: ProductViewModel(settings: .shared))
+    }
     
-    let filterOptions = ["Todos", "Nombre", "Código", "Referencia", "Departamento", "Proveedor", "Bodega"]
+    let filterOptions = ["Nombre", "Código", "Referencia"]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -23,7 +28,6 @@ struct ProductScreen: View, CameraScannerViewDelegate {
             // Filter Pills
             if showFilters {
                 filterScrollView
-                    .transition(.move(edge: .top).combined(with: .opacity))
             }
             
             // Content Area
@@ -50,6 +54,18 @@ struct ProductScreen: View, CameraScannerViewDelegate {
         .sheet(isPresented: $showError) {
             ErrorView(errorMessage: viewModel.errorMessage ?? "Error desconocido", retryAction: { viewModel.fetchProducts() }, isShowingError: $showError)
         }
+        .alert("Producto no encontrado", isPresented: $viewModel.showCreateProductAlert) {
+            Button("Sí") {
+                print("ProductScreen: 'Sí' button tapped at \(Date())")
+                navigateToCreaProducto = true
+            }
+            Button("No", role: .cancel) { }
+        } message: {
+            Text("El producto con el código \(viewModel.productNotFoundCode ?? "") no existe. ¿Desea crearlo?")
+        }
+        .sheet(isPresented: $navigateToCreaProducto) {
+            CreaProductoView(codigoDeReferencia: viewModel.productNotFoundCode)
+        }
     }
     
     // MARK: - Subviews
@@ -62,8 +78,10 @@ struct ProductScreen: View, CameraScannerViewDelegate {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(.secondary)
                     
-                    TextField("Buscar productos...", text: $viewModel.searchQuery)
-                        .textFieldStyle(.plain)
+                    TextField("Buscar productos...", text: $viewModel.searchQuery, onCommit: {
+                        viewModel.searchProductByCode()
+                    })
+                    .textFieldStyle(.plain)
                     
                     if !viewModel.searchQuery.isEmpty {
                         Button(action: {
@@ -80,6 +98,19 @@ struct ProductScreen: View, CameraScannerViewDelegate {
                 .padding(.vertical, 10)
                 .background(Color(.systemGray5))
                 .cornerRadius(12)
+
+                // Search button
+                Button(action: {
+                    viewModel.searchProductByCode()
+                }) {
+                    Image(systemName: "arrow.right.circle.fill")
+                        .font(.title3)
+                        .foregroundColor(.white)
+                        .frame(width: 44, height: 44)
+                        .background(Color.accentColor)
+                        .cornerRadius(12)
+                }
+                .disabled(viewModel.searchQuery.isEmpty)
                 
                 // Scanner Button
                 Button(action: {
@@ -95,9 +126,8 @@ struct ProductScreen: View, CameraScannerViewDelegate {
                 
                 // Filter Toggle
                 Button(action: {
-                    withAnimation(.spring(response: 0.3)) {
-                        showFilters.toggle()
-                    }
+                    print("Filter toggle button tapped. showFilters is now \(!showFilters)")
+                    showFilters.toggle()
                 }) {
                     Image(systemName: showFilters ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
                         .font(.title3)
@@ -127,21 +157,18 @@ struct ProductScreen: View, CameraScannerViewDelegate {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 ForEach(filterOptions, id: \.self) { filter in
-                    FilterChipModern(
-                        title: filter,
-                        isSelected: viewModel.selectedFilterType == filter,
-                        action: {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                viewModel.selectedFilterType = filter
-                            }
-                        }
-                    )
+                    Button(filter) {
+                        viewModel.selectedFilterType = filter
+                    }
+                    .buttonStyle(FilterChipButtonStyle(isSelected: viewModel.selectedFilterType == filter))
                 }
             }
             .padding(.horizontal)
             .padding(.vertical, 12)
         }
         .background(Color(.systemBackground))
+        .onAppear { print("filterScrollView appeared") }
+        .onDisappear { print("filterScrollView disappeared") }
     }
     
     private var toolbarButtons: some View {
@@ -178,7 +205,7 @@ struct ProductScreen: View, CameraScannerViewDelegate {
                         showError = true
                     }
                 } else if viewModel.products.isEmpty {
-                    EmptyStateView()
+                    EmptyStateView(systemImage: "magnifyingglass", message: "Busca productos por nombre, código o referencia.")
                 } else {
                     productsListView
                 }
@@ -193,7 +220,8 @@ struct ProductScreen: View, CameraScannerViewDelegate {
                         onNavigateToCambioPrecio: { productCode in
                             selectedProductCode = productCode
                             navigateToCambioPrecio = true
-                        }
+                        },
+                        productSource: viewModel.productSource // Pass the source here
                     )
                     .environmentObject(settings)
                     .environmentObject(viewModel)
@@ -208,11 +236,15 @@ struct ProductScreen: View, CameraScannerViewDelegate {
             .padding()
         }
         .background(
-            NavigationLink(
-                destination: selectedProductCode.map { CambioPrecioView(codigo: $0).environmentObject(viewModel) },
-                isActive: $navigateToCambioPrecio
-            ) {
-                EmptyView()
+            Group {
+                if let productCode = selectedProductCode {
+                    NavigationLink(
+                        destination: CambioPrecioView(codigo: productCode).environmentObject(viewModel),
+                        isActive: $navigateToCambioPrecio
+                    ) {
+                        EmptyView()
+                    }
+                }
             }
         )
     }
@@ -223,32 +255,11 @@ struct ProductScreen: View, CameraScannerViewDelegate {
     }
 }
 
-// MARK: - Modern Filter Chip
-struct FilterChipModern: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(isSelected ? .semibold : .regular)
-                .foregroundColor(isSelected ? .white : .primary)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(
-                    Capsule()
-                        .fill(isSelected ? Color.accentColor : Color(.systemGray5))
-                )
-        }
-    }
-}
-
 // MARK: - Product Card with Grid Layout (SOLUCIÓN RECOMENDADA)
 struct ProductCardView: View {
     let product: Product
     let onNavigateToCambioPrecio: (String) -> Void
+    var productSource: DataSource? = nil // Add this line
     @StateObject private var cardViewModel = ProductCardViewModel()
     @EnvironmentObject var settings: SettingsManager
     @EnvironmentObject var viewModel: ProductViewModel
@@ -313,7 +324,7 @@ struct ProductCardView: View {
                 //}
                 
                 // Product Details
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 4) { // Increased spacing a bit
                     Text(product.desproducto ?? "Sin nombre")
                         .font(.headline)
                         .lineLimit(2)
@@ -331,14 +342,21 @@ struct ProductCardView: View {
                         Text(product.codproducto ?? "N/A")
                             .font(.caption)
                             .fontWeight(.medium)
-                           
-
                     }
                     .foregroundColor(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    //.background(Color(.systemGray6))
-                    //.cornerRadius(6)
+                    
+                    // Product Source Indicator (MOVED HERE)
+                    if let source = productSource {
+                        HStack(spacing: 4) {
+                            Image(systemName: source == .api ? "wifi" : "archivebox.fill")
+                                .font(.caption2) // Smaller icon
+                                .foregroundColor(source == .api ? .green : .gray)
+                            Text(source == .api ? "Online" : "Local") // Changed text
+                                .font(.caption2) // Smaller text
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.top, 2)
+                    }
                 }
                 
                 Spacer()
@@ -679,51 +697,6 @@ struct ProductCardView: View {
 
 }
 
-// MARK: - Action Grid Button
-struct ActionGridButton: View {
-    let icon: String
-    let title: String
-    var isSelected: Bool = false
-    var color: Color = .accentColor
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            ActionGridButtonLabel(
-                icon: icon,
-                title: title,
-                isSelected: isSelected,
-                color: color
-            )
-        }
-    }
-}
-
-struct ActionGridButtonLabel: View {
-    let icon: String
-    let title: String
-    var isSelected: Bool = false
-    var color: Color = .accentColor
-    
-    var body: some View {
-        VStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundColor(isSelected ? .white : color)
-            
-            Text(title)
-                .font(.caption2)
-                .fontWeight(.medium)
-                .foregroundColor(isSelected ? .white : .primary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(isSelected ? color : color.opacity(0.1))
-        )
-    }
-}
 
 // MARK: - Modern Product Details
 struct ProductDetailsModern: View {
@@ -850,30 +823,6 @@ struct DetailCard: View {
     }
 }
 
-// MARK: - Empty State
-struct EmptyStateView: View {
-    var body: some View {
-        VStack(spacing: 20) {
-            Spacer()
-            
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 60))
-                .foregroundColor(.secondary)
-            
-            Text("Busca productos")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            Text("Ingresa un término de búsqueda o escanea un código de barras para comenzar")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-            
-            Spacer()
-        }
-    }
-}
 
 
 
