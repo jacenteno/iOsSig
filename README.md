@@ -70,16 +70,16 @@ La aplicación sigue una arquitectura moderna y escalable, basada en los siguien
 
 ```mermaid
 graph TD
-    A[View (SwiftUI)] -- Acciones --> B(ViewModel);
-    B -- Solicita Datos --> C{Repository};
-    C -- Intenta API --> D[APIService];
-    D -- Falla --> C;
-    C -- Intenta Caché --> E[CoreDataStack];
-    E -- Devuelve Datos Locales --> C;
-    D -- Devuelve Datos API --> C;
-    C -- Guarda en Caché --> E;
-    C -- Devuelve (Producto, Fuente) --> B;
-    B -- Actualiza Estado --> A;
+    A[View (SwiftUI)] -- "Acciones" --> B(ViewModel);
+    B -- "Solicita Datos" --> C{Repository};
+    C -- "Intenta API" --> D[APIService];
+    D -- "Falla" --> C;
+    C -- "Intenta Caché" --> E[CoreDataStack];
+    E -- "Devuelve Datos Locales" --> C;
+    D -- "Devuelve Datos API" --> C;
+    C -- "Guarda en Caché" --> E;
+    C -- "Devuelve (Producto, Fuente)" --> B;
+    B -- "Actualiza Estado" --> A;
 ```
 
 ---
