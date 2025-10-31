@@ -8,45 +8,47 @@ struct ProductScreen: View, CameraScannerViewDelegate {
     @State private var navigateToCambioPrecio = false
     @State private var selectedProductCode: String? = nil
     @EnvironmentObject var settings: SettingsManager
+    @EnvironmentObject var cartManager: CartManager
+    @State private var showError: Bool = false // State to control ErrorView presentation
     
     let filterOptions = ["Todos", "Nombre", "Código", "Referencia", "Departamento", "Proveedor", "Bodega"]
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Enhanced Search Bar
-                searchHeaderView
-                    .padding(.horizontal)
-                    .padding(.top, 8)
-                
-                // Filter Pills
-                if showFilters {
-                    filterScrollView
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
-                
-                // Content Area
-                contentView
+        VStack(spacing: 0) {
+            // Enhanced Search Bar
+            searchHeaderView
+                .padding(.horizontal)
+                .padding(.top, 8)
+            
+            // Filter Pills
+            if showFilters {
+                filterScrollView
+                    .transition(.move(edge: .top).combined(with: .opacity))
             }
-            .frame(maxHeight: .infinity, alignment: .top)
-            .background(
-                LinearGradient(
-                    colors: [Color(.systemBackground), Color(.systemGray6)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+            
+            // Content Area
+            contentView
+        }
+        .frame(maxHeight: .infinity, alignment: .top)
+        .background(
+            LinearGradient(
+                colors: [Color(.systemBackground), Color(.systemGray6)],
+                startPoint: .top,
+                endPoint: .bottom
             )
-            .navigationTitle("Productos")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    toolbarButtons
-                }
+            .ignoresSafeArea()
+        )
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                toolbarButtons
             }
-            .sheet(isPresented: $isShowingScanner) {
-                CameraScannerView(delegate: self)
-            }
+        }
+        .sheet(isPresented: $isShowingScanner) {
+            CameraScannerView(delegate: self)
+        }
+        .sheet(isPresented: $showError) {
+            ErrorView(errorMessage: viewModel.errorMessage ?? "Error desconocido", retryAction: { viewModel.fetchProducts() }, isShowingError: $showError)
         }
     }
     
@@ -145,17 +147,7 @@ struct ProductScreen: View, CameraScannerViewDelegate {
     private var toolbarButtons: some View {
         HStack(spacing: 16) {
             NavigationLink(destination: CurrentOrderScreen()) {
-                ZStack(alignment: .topTrailing) {
-                    Image(systemName: "cart.fill")
-                        .font(.title3)
-                    
-                    if 0 > 0 { // Badge count - replace with actual count
-                        Circle()
-                            .fill(Color.red)
-                            .frame(width: 8, height: 8)
-                            .offset(x: 4, y: -4)
-                    }
-                }
+                CartBadgeView()
             }
             
             NavigationLink(destination: OrdersListScreen()) {
@@ -178,18 +170,21 @@ struct ProductScreen: View, CameraScannerViewDelegate {
                     .padding(.top)
                 Spacer()
             }
-        } else if let errorMessage = viewModel.errorMessage {
-            ErrorStateView(message: errorMessage) {
-                viewModel.fetchProducts()
+                } else if let errorMessage = viewModel.errorMessage {
+                    // Set showError to true to present the ErrorView
+                    // The ErrorView will handle its own dismissal after a timeout
+                    // or if the user taps retry.
+                    Color.clear.onAppear {
+                        showError = true
+                    }
+                } else if viewModel.products.isEmpty {
+                    EmptyStateView()
+                } else {
+                    productsListView
+                }
             }
-        } else if viewModel.products.isEmpty {
-            EmptyStateView()
-        } else {
-            productsListView
-        }
-    }
-    
-    private var productsListView: some View {
+            
+            private var productsListView: some View {
         ScrollView {
             LazyVStack(spacing: 16) {
                 ForEach(viewModel.products) { product in
@@ -202,6 +197,7 @@ struct ProductScreen: View, CameraScannerViewDelegate {
                     )
                     .environmentObject(settings)
                     .environmentObject(viewModel)
+                    .environmentObject(cartManager)
                     .onAppear {
                         if product.id == viewModel.products.last?.id && viewModel.canLoadMorePages {
                             viewModel.loadMoreProducts()
@@ -213,7 +209,7 @@ struct ProductScreen: View, CameraScannerViewDelegate {
         }
         .background(
             NavigationLink(
-                destination: selectedProductCode.map { CambioPrecioView(codigo: $0) },
+                destination: selectedProductCode.map { CambioPrecioView(codigo: $0).environmentObject(viewModel) },
                 isActive: $navigateToCambioPrecio
             ) {
                 EmptyView()
@@ -253,13 +249,12 @@ struct FilterChipModern: View {
 struct ProductCardView: View {
     let product: Product
     let onNavigateToCambioPrecio: (String) -> Void
-    @State private var showDetails = false
+    @StateObject private var cardViewModel = ProductCardViewModel()
     @EnvironmentObject var settings: SettingsManager
     @EnvironmentObject var viewModel: ProductViewModel
-    @State private var selectedTab = 0
+    @EnvironmentObject var cartManager: CartManager
     @State private var isHacerPedidosActive = false
     @State private var isEtiquetaActive = false
-    @State private var showTabContent = true
 
     var body: some View {
         VStack(spacing: 0) {
@@ -279,9 +274,10 @@ struct ProductCardView: View {
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 2)
         .onAppear {
+            cardViewModel.loadProductDetails(for: product) // New: Call to load details
             if viewModel.selectedFilterType == "Código" && viewModel.products.count == 1 {
                 withAnimation(.spring()) {
-                    showDetails = true
+                    cardViewModel.showDetails = true
                 }
             }
         }
@@ -301,18 +297,18 @@ struct ProductCardView: View {
         VStack(spacing: 12) {
             HStack(alignment: .top, spacing: 16) {
                 // Product Icon
-                ZStack {
-                    Circle()
-                        .fill(Color.accentColor.opacity(0.1))
-                        .frame(width: 60, height: 60)
-                    
-                    Image(systemName: "shippingbox.fill")
-                        .font(.title)
-                        .foregroundColor(.accentColor)
-                }
+               //ZStack {
+                 //   Circle()
+                ///        .fill(Color.accentColor.opacity(0.1))
+                 //       .frame(width: 60, height: 60)
+                  //
+                  //  Image(systemName: "ticket.fill")
+                  //      .font(.title)
+                  //      .foregroundColor(.accentColor)
+                //}
                 
                 // Product Details
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(product.desproducto ?? "Sin nombre")
                         .font(.headline)
                         .lineLimit(2)
@@ -326,15 +322,18 @@ struct ProductCardView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "tag.fill")
                             .font(.caption)
+                            .foregroundColor(.red)
                         Text(product.codproducto ?? "N/A")
                             .font(.caption)
                             .fontWeight(.medium)
+                           
+
                     }
                     .foregroundColor(.secondary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(6)
+                    //.background(Color(.systemGray6))
+                    //.cornerRadius(6)
                 }
                 
                 Spacer()
@@ -342,16 +341,19 @@ struct ProductCardView: View {
                 // Price
                 VStack(alignment: .trailing, spacing: 4) {
                     Text(String(format: "$%.2f", product.preciodeventa ?? 0.0))
-                        .font(.title2)
+                        .font(.largeTitle)
                         .fontWeight(.bold)
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(.red)
                     
-                    Text("Precio")
+                    Text("Precio Regular")
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.white)
+                        .padding(4)
+                        .background(Color.red)
+                        .cornerRadius(4)
                 }
                 .padding(8)
-                .background(Color.accentColor.opacity(0.1))
+               // .background(Color.customPinkRed.opacity(0.1))
                 .cornerRadius(10)
             }
         }
@@ -362,146 +364,316 @@ struct ProductCardView: View {
         }
     }
     
-    @ViewBuilder
-    private var detailsSection: some View {
-        Divider()
-            .padding(.horizontal)
-        
-        Button(action: {
-            withAnimation(.spring(response: 0.3)) {
-                showDetails.toggle()
-                if showDetails {
-                    viewModel.fetchProductDetails(for: product)
-                }
-            }
-        }) {
-            HStack {
-                Text(showDetails ? "Ocultar información" : "Ver información completa")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                Spacer()
-                Image(systemName: showDetails ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
-            }
-            .foregroundColor(.accentColor)
-            .padding(.horizontal)
-            .padding(.vertical, 12)
-        }
-        
-        if showDetails {
-            VStack(spacing: 16) {
-                // Grid de acciones 3x2 (NO SCROLL HORIZONTAL)
-                actionGridView
-                
-                if showTabContent {
-                    Divider()
-                        .padding(.horizontal)
-                    
-                    // Content based on selection
-                    tabContentView
-                        .transition(.opacity)
-                }
-            }
-            .padding(.horizontal)
-            .padding(.bottom)
-        }
-    }
+            @ViewBuilder
     
-    private var actionGridView: some View {
-        VStack(spacing: 12) {
-            // Primera fila: Tabs de visualización
-            HStack(spacing: 12) {
-                ActionGridButton(
-                    icon: "info.circle.fill",
-                    title: "Detalles",
-                    isSelected: selectedTab == 0,
-                    color: .accentColor
-                ) {
-                    if selectedTab == 0 {
-                        withAnimation { showTabContent.toggle() }
-                    } else {
-                        withAnimation { 
-                            selectedTab = 0
-                            showTabContent = true
-                        }
-                    }
-                }
+            private var detailsSection: some View {
+    
+                Divider()
+    
+                    .padding(.horizontal)
+    
                 
-                ActionGridButton(
-                    icon: "chart.bar.fill",
-                    title: "Ventas",
-                    isSelected: selectedTab == 1,
-                    color: .accentColor
-                ) {
-                    if selectedTab == 1 {
-                        withAnimation { showTabContent.toggle() }
-                    } else {
-                        withAnimation { 
-                            selectedTab = 1
-                            showTabContent = true
+    
+                Button(action: {
+    
+                    withAnimation(.spring(response: 0.3)) {
+    
+                        cardViewModel.showDetails.toggle()
+    
+                        if cardViewModel.showDetails {
+                            cardViewModel.fetchVentas(for: product) { _ in }
                         }
+    
                     }
+    
+                }) {
+    
+                    HStack {
+    
+                        Text(cardViewModel.showDetails ? "Ocultar información" : "Ver información completa")
+    
+                            .font(.subheadline)
+    
+                            .fontWeight(.medium)
+    
+                        Spacer()
+    
+                        Image(systemName: cardViewModel.showDetails ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
+    
+                    }
+    
+                    .foregroundColor(.accentColor)
+    
+                    .padding(.horizontal)
+    
+                    .padding(.vertical, 12)
+    
                 }
+    
                 
-                ActionGridButton(
-                    icon: "cart.fill",
-                    title: "Compras",
-                    isSelected: selectedTab == 2,
-                    color: .accentColor
-                ) {
-                    if selectedTab == 2 {
-                        withAnimation { showTabContent.toggle() }
-                    } else {
-                        withAnimation { 
-                            selectedTab = 2
-                            showTabContent = true
+    
+                if cardViewModel.showDetails {
+    
+                    VStack(spacing: 16) {
+    
+                        // Grid de acciones 3x2 (NO SCROLL HORIZONTAL)
+    
+                        actionGridView
+    
+                        
+    
+                        if cardViewModel.showTabContent {
+    
+                            Divider()
+    
+                                .padding(.horizontal)
+    
+                            
+    
+                            // Content based on selection
+    
+                            tabContentView
+    
+                                .transition(.opacity)
+    
                         }
+    
                     }
+    
+                    .padding(.horizontal)
+    
+                    .padding(.bottom)
+    
                 }
+    
             }
+    
             
-            // Segunda fila: Acciones
-            HStack(spacing: 12) {
-                ActionGridButton(
-                    icon: "dollarsign.circle.fill",
-                    title: "Precio",
-                    color: .orange
-                ) {
-                    onNavigateToCambioPrecio(product.codproducto ?? "")
-                }
-                
-                ActionGridButton(
-                    icon: "plus.circle.fill",
-                    title: "Pedir",
-                    color: .green
-                ) {
-                    isHacerPedidosActive = true
-                }
-                
-                ActionGridButton(
-                    icon: "printer.fill",
-                    title: "Etiqueta",
-                    color: .purple
-                ) {
-                    isEtiquetaActive = true
-                }
-            }
-        }
-    }
     
-    @ViewBuilder
-    private var tabContentView: some View {
-        switch selectedTab {
-        case 0:
-            ProductDetailsModern(product: product)
-                .environmentObject(settings)
-        case 1:
-            SalesContent2(venta: viewModel.ventas[product.codproducto ?? ""])
-        case 2:
-            PurchasesContent2(citymallProd: viewModel.citymallProds[product.codproducto ?? ""])
-        default:
-            EmptyView()
-        }
-    }
+            private var actionGridView: some View {
+    
+                VStack(spacing: 12) {
+    
+                    // Primera fila: Tabs de visualización
+    
+                    HStack(spacing: 12) {
+    
+                        ActionGridButton(
+    
+                            icon: "info.circle.fill",
+    
+                            title: "Detalles",
+    
+                            isSelected: cardViewModel.selectedTab == 0,
+    
+                            color: .accentColor
+    
+                        ) {
+    
+                            if cardViewModel.selectedTab == 0 {
+    
+                                withAnimation { cardViewModel.showTabContent.toggle() }
+    
+                            } else {
+    
+                                withAnimation { 
+    
+                                    cardViewModel.selectedTab = 0
+    
+                                    cardViewModel.showTabContent = true
+    
+                                }
+    
+                            }
+    
+                        }
+    
+                        
+    
+                        ActionGridButton(
+    
+                            icon: "chart.bar.fill",
+    
+                            title: "Ventas",
+    
+                            isSelected: cardViewModel.selectedTab == 1,
+    
+                            color: .accentColor
+    
+                        ) {
+                            if settings.desplegarVentasApiOld {
+                                cardViewModel.fetchCompras(for: product) { success in
+                                    if success {
+                                        if cardViewModel.selectedTab == 1 {
+                                            withAnimation { cardViewModel.showTabContent.toggle() }
+                                        } else {
+                                            withAnimation { 
+                                                cardViewModel.selectedTab = 1
+                                                cardViewModel.showTabContent = true
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                cardViewModel.fetchVentas(for: product) { success in
+                                    if success {
+                                        if cardViewModel.selectedTab == 1 {
+                                            withAnimation { cardViewModel.showTabContent.toggle() }
+                                        } else {
+                                            withAnimation { 
+                                                cardViewModel.selectedTab = 1
+                                                cardViewModel.showTabContent = true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+    
+                        
+                        if settings.desplegarComprasApiOld {
+                            ActionGridButton(
+        
+                                icon: "cart.fill",
+        
+                                title: "Compras",
+        
+                                isSelected: cardViewModel.selectedTab == 2,
+        
+                                color: .accentColor
+        
+                            ) {
+        
+                                cardViewModel.fetchCompras(for: product) { success in
+                                    if success {
+                                        if cardViewModel.selectedTab == 2 {
+                                            withAnimation { cardViewModel.showTabContent.toggle() }
+                                        } else {
+                                            withAnimation { 
+                                                cardViewModel.selectedTab = 2
+                                                cardViewModel.showTabContent = true
+                                            }
+                                        }
+                                    }
+                                }
+        
+                            }
+                        }
+    
+                    }
+    
+                    
+    
+                    // Segunda fila: Acciones
+    
+                    HStack(spacing: 12) {
+    
+                        ActionGridButton(
+    
+                            icon: "dollarsign.circle.fill",
+    
+                            title: "Cambios P.",
+    
+                            color: .orange
+    
+                        ) {
+    
+                            onNavigateToCambioPrecio(product.codproducto ?? "")
+    
+                        }
+    
+                        
+    
+                        ActionGridButton(
+    
+                            icon: "plus.circle.fill",
+    
+                            title: "Pedir",
+    
+                            color: .green
+    
+                        ) {
+    
+                            cartManager.addItem()
+    
+                            isHacerPedidosActive = true
+    
+                        }
+    
+                        
+    
+                        ActionGridButton(
+    
+                            icon: "printer.fill",
+    
+                            title: "Etiqueta",
+    
+                            color: .purple
+    
+                        ) {
+    
+                            isEtiquetaActive = true
+    
+                        }
+    
+                    }
+    
+                }
+    
+            }
+    
+            
+    
+            @ViewBuilder
+    
+            private var tabContentView: some View {
+    
+                switch cardViewModel.selectedTab {
+    
+                                case 0:
+                
+                                    ProductDetailsModern(product: product, cmdProductDetails: cardViewModel.cmdProductDetails)
+                
+                                        .environmentObject(settings)    
+                                case 1:
+                    if settings.desplegarVentasApiOld {
+                        if let citymallProd = cardViewModel.citymallProd {
+                            NewSalesDetailView(sales: citymallProd.ventas)
+                        } else {
+                            ProgressView()
+                        }
+                    } else {
+                        if let venta = cardViewModel.venta {
+                            SalesDetailView(venta: venta)
+                                .id(venta.id)
+                        } else {
+                            ProgressView()
+                        }
+                    }
+    
+                case 2:
+    
+                    if let citymallProd = cardViewModel.citymallProd {
+    
+                        PurchasesDetailView(citymallProd: citymallProd)
+    
+                    }
+    
+                    else {
+    
+                        ProgressView()
+    
+                    }
+    
+                default:
+    
+                    EmptyView()
+    
+                }
+    
+            }
+    
+
 }
 
 // MARK: - Action Grid Button
@@ -531,18 +703,18 @@ struct ActionGridButtonLabel: View {
     var color: Color = .accentColor
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.title2)
+                .font(.title3)
                 .foregroundColor(isSelected ? .white : color)
             
             Text(title)
-                .font(.caption)
+                .font(.caption2)
                 .fontWeight(.medium)
                 .foregroundColor(isSelected ? .white : .primary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
+        .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(isSelected ? color : color.opacity(0.1))
@@ -553,64 +725,88 @@ struct ActionGridButtonLabel: View {
 // MARK: - Modern Product Details
 struct ProductDetailsModern: View {
     let product: Product
+    var cmdProductDetails: ProductDetails? // New property
     @EnvironmentObject var settings: SettingsManager
 
     var body: some View {
         VStack(spacing: 12) {
             DetailCard(
-                icon: "number.circle.fill",
-                label: "Código",
-                value: product.codproducto ?? "N/A"
-            )
-            
+                    icon: "paperclip.circle.fill",
+                    label: "Cod.Producto",
+                    value: product.codproducto?.replacingOccurrences(of: " ", with: "") ?? "N/A"
+                )
+                .frame(maxWidth: .infinity, alignment: .trailing)
+            DetailCard(
+                    icon: "number.circle.fill",
+                    label: "Ref.",
+                    value: product.codigobarra?.replacingOccurrences(of: " ", with: "") ?? "N/A"
+                )                .frame(maxWidth: .infinity, alignment: .trailing)
+
             DetailCard(
                 icon: "building.2.fill",
                 label: "Bodega",
                 value: product.codbodega ?? "N/A"
             )
-            
+
             DetailCard(
                 icon: "square.grid.2x2.fill",
                 label: "Departamento",
-                value: product.nombre_departamento ?? "N/A"
-            )
-            
+                value: product.nombre_departamento?.replacingOccurrences(of: " ", with: "") ?? "N/A"
+            )                .frame(maxWidth: .infinity, alignment: .trailing)
+
+
             if settings.userRole.hasPermission("VIEW_INVENTARIO") {
-                DetailCard(
-                    icon: "cube.box.fill",
-                    label: "Existencias",
-                    value: "\(product.existencias ?? 0)",
-                    highlighted: (product.existencias ?? 0) < 10
-                )
+                let stockValue = cmdProductDetails?.existencia ?? (product.existencias != nil ? Int(product.existencias!) : 0)
+                HStack(spacing: 12) {
+                    Image(systemName: "cube.box.fill")
+                        .font(.body)
+                        .foregroundColor(.accentColor)
+                        .frame(width: 24)
+                    
+                    Text("Existencias")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
+                    Spacer()
+                    
+                    Text("\(stockValue)")
+                        .font(.title) // Larger font
+                        .fontWeight(.bold)
+                        .foregroundColor(stockValue > 0 ? .green : .red) // Conditional color
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Color(.systemGray6))
+                .cornerRadius(10)
             }
-            
+
             if settings.userRole.hasPermission("VIEW_COSTO") {
                 DetailCard(
                     icon: "dollarsign.circle.fill",
                     label: "Costo",
-                    value: String(format: "$%.2f", product.ultcosto ?? 0.0)
+                    value: String(format: "$%.6f", cmdProductDetails?.costo ?? product.ultcosto ?? 0.0) // Prioritize cmdProductDetails
                 )
-                
+
                 DetailCard(
                     icon: "dollarsign.square.fill",
                     label: "Costo FOB",
-                    value: String(format: "$%.2f", product.costofob ?? 0.0)
+                    value: String(format: "$%.6f", cmdProductDetails?.costoFob ?? product.costofob ?? 0.0) // Prioritize cmdProductDetails
                 )
             }
-            
+
             DetailCard(
                 icon: "calendar.badge.clock",
                 label: "F. Vencimiento",
                 value: convertClarionDateToString(clarionDate: product.fvencimiento)
             )
-            
+
             DetailCard(
                 icon: (product.bloqueofacturacion ?? 0) == 1 ? "lock.fill" : "lock.open.fill",
                 label: "Facturación",
                 value: (product.bloqueofacturacion ?? 0) == 1 ? "Bloqueado" : "Activo",
                 highlighted: (product.bloqueofacturacion ?? 0) == 1
             )
-            
+
             DetailCard(
                 icon: "percent",
                 label: "Gravado/Exento",
@@ -676,48 +872,13 @@ struct EmptyStateView: View {
     }
 }
 
-// MARK: - Error State
-struct ErrorStateView: View {
-    let message: String
-    let retryAction: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            Spacer()
-            
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 60))
-                .foregroundColor(.orange)
-            
-            Text("Error")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            Text(message)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-            
-            Button(action: retryAction) {
-                Text("Reintentar")
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 32)
-                    .padding(.vertical, 12)
-                    .background(Color.accentColor)
-                    .cornerRadius(10)
-            }
-            
-            Spacer()
-        }
-    }
-}
+
 
 // MARK: - Preview
 struct ProductScreen_Previews: PreviewProvider {
     static var previews: some View {
         ProductScreen()
             .environmentObject(SettingsManager.shared)
+            .environmentObject(CartManager())
     }
 }

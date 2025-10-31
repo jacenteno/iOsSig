@@ -4,6 +4,7 @@ struct VentaHistorial: Codable {
     let anno: Int
     let mes: Int
     let ventas: Int
+    let salidas: Int
     let titulo: String
     let keyAnnoMes: String
 
@@ -11,6 +12,7 @@ struct VentaHistorial: Codable {
         case anno
         case mes
         case ventas
+        case salidas
         case titulo
         case keyAnnoMes = "keyannomes"
     }

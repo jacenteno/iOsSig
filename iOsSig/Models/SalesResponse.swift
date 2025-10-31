@@ -32,45 +32,45 @@ struct TotalDescuentos2Item: Decodable {
 }
 
 struct SalesResponse: Decodable {
-    let ventaPorGrupoCaja: [String: SalesSummaryItem]
-    let ventaPorHoraGeneral: [String: SalesByHourItem]
-    let ventaPorGrupoCajaDetalle: [String: AreaDetail]
-    let totalTickets: Int // Renamed from totalFacturas
-    let totalFacturaDelMes: Double
-    let totalClientes: Int
-    let ventaPorHora: [String: [String: SalesByHourDetailItem]] // Changed to SalesByHourDetailItem
-    let ventaPorCaja: [String: CashRegisterSummaryItem] // Changed to CashRegisterSummaryItem
-    let totalesPorCaja2: [String: CashRegisterSummaryItem] // Changed to CashRegisterSummaryItem
-    let fechaClarion: Int
-    let fechaWeb: String
-    let ventaNotaDeCredito: [String: VentaNotaDeCreditoItem]
-    let totalTransaNotaDeCredito: Int
-    let totalCajasNotaDeCredito: Int
-    let totalMontoIngreso: Double
-    let totalMontoEgreso: Double
-    let totalTransacciones: Int
-    let totalMontoFinal: Double
-    let ventaIngreso: [String: VentaIngresoItem]
-    let ventaEgreso: [String: VentaEgresoItem]
-    let totalTransaEgreso: Int
-    let totalTransaIngreso: Int
-    let totalCajasIngreso: Int
-    let totalCajasEgreso: Int
-    let totalDescuentos: TotalDescuentosItem
-    let totalDescuentos2: TotalDescuentos2Item
-    let finalDescuento: Double
-    let totalCajasGrupo: Int
-    let totalTransaccionCajaGrupo: Int
-    let totalMontoCajaGrupo: Double
-    let totalCajas: Int
-    let totalTransaccionCaja: Int
-    let totalMontoCaja: Double
+    let ventaPorGrupoCaja: [String: SalesSummaryItem]?
+    let ventaPorHoraGeneral: [String: SalesByHourItem]?
+    let ventaPorGrupoCajaDetalle: [String: AreaDetail]?
+    let totalTickets: Int? // Renamed from totalFacturas
+    let totalFacturaDelMes: Double?
+    let totalClientes: Int?
+    let ventaPorHora: [String: [String: SalesByHourDetailItem]]? // Changed to SalesByHourDetailItem
+    let ventaPorCaja: [String: CashRegisterSummaryItem]? // Changed to CashRegisterSummaryItem
+    let totalesPorCaja2: [String: CashRegisterSummaryItem]? // Changed to CashRegisterSummaryItem
+    let fechaClarion: Int?
+    let fechaWeb: String?
+    let ventaNotaDeCredito: [String: VentaNotaDeCreditoItem]?
+    let totalTransaNotaDeCredito: Int?
+    let totalCajasNotaDeCredito: Int?
+    let totalMontoIngreso: Double?
+    let totalMontoEgreso: Double?
+    let totalTransacciones: Int?
+    let totalMontoFinal: Double?
+    let ventaIngreso: [String: VentaIngresoItem]?
+    let ventaEgreso: [String: VentaEgresoItem]?
+    let totalTransaEgreso: Int?
+    let totalTransaIngreso: Int?
+    let totalCajasIngreso: Int?
+    let totalCajasEgreso: Int?
+    let totalDescuentos: TotalDescuentosItem?
+    let totalDescuentos2: TotalDescuentos2Item?
+    let finalDescuento: Double?
+    let totalCajasGrupo: Int?
+    let totalTransaccionCajaGrupo: Int?
+    let totalMontoCajaGrupo: Double?
+    let totalCajas: Int?
+    let totalTransaccionCaja: Int?
+    let totalMontoCaja: Double?
 
 
     enum CodingKeys: String, CodingKey {
         case ventaPorGrupoCaja = "venta_por_grupo_caja"
         case ventaPorHoraGeneral = "venta_por_hora_general"
-        case ventaPorGrupoCajaDetalle = "venta_por_grupo_caja_detlle"
+        case ventaPorGrupoCajaDetalle = "venta_por_grupo_caja_detalle"
         case totalTickets = "total_facturas" // Mapping to the old key
         case totalFacturaDelMes = "total_factura_del_mes"
         case totalClientes = "total_clientes"

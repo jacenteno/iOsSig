@@ -9,6 +9,7 @@ struct HomeScreen: View {
     let version: String
     let requestCode: String
    
+    @State private var showError: Bool = false // State to control ErrorView presentation
     
     private let gridColumns = [GridItem(.flexible()), GridItem(.flexible())]
     
@@ -32,10 +33,12 @@ struct HomeScreen: View {
                                 .scaleEffect(1.2)
                                 .padding(.vertical, 50)
                         } else if let error = viewModel.error {
-                            ErrorView(errorMessage: error) {
-                                viewModel.fetchSalesData()
+                            // Set showError to true to present the ErrorView
+                            // The ErrorView will handle its own dismissal after a timeout
+                            // or if the user taps retry.
+                            Color.clear.onAppear {
+                                showError = true
                             }
-                            .padding(.horizontal)
                         } else {
                             summaryHeaderSection.padding(.horizontal)
                             summaryGrid
@@ -51,6 +54,9 @@ struct HomeScreen: View {
                         .padding(.horizontal)
                 }
                 .padding(.vertical)
+            }
+            .sheet(isPresented: $showError) {
+                ErrorView(errorMessage: viewModel.error ?? "Error desconocido", retryAction: { viewModel.fetchSalesData() }, isShowingError: $showError)
             }
             .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
             .navigationTitle("Resumen de Ventas de hoy")
@@ -200,7 +206,7 @@ struct SummaryCard: View {
                 .foregroundColor(.secondary)
             
             Text(formattedValue)
-                .font(.default)
+                .font(.body)
                 .fontWeight(.medium)
                 .foregroundColor(.primary)
                 .lineLimit(1)
@@ -213,36 +219,6 @@ struct SummaryCard: View {
     }
 }
 
-struct ErrorView: View {
-    let errorMessage: String
-    let retryAction: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.largeTitle)
-                .foregroundColor(.orange)
-            Text("Error al Cargar Datos")
-                .font(.headline)
-                .fontWeight(.bold)
-            Text(errorMessage)
-                .font(.subheadline)
-                .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
-                .padding(.horizontal)
-            Button("Reintentar") {
-                retryAction()
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.red)
-            .padding(.top)
-        }
-        .padding()
-        .background(Color(UIColor.secondarySystemGroupedBackground))
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-    }
-}
 
 struct HomeScreen_Previews: PreviewProvider {
     static var previews: some View {

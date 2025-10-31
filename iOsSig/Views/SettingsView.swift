@@ -130,8 +130,19 @@ struct SettingsView: View {
                 }
 
                 Toggle(isOn: $settings.useOldApi) {
-                    Label("Usar API Anterior", systemImage: "arrow.left.arrow.right")
+                    Label("Usar API Old", systemImage: "arrow.left.arrow.right")
                 }
+                
+                Toggle(isOn: $settings.desplegarVentasApiOld) {
+                    Label("Mostrar Ventas de Api OLD", systemImage: "arrow.left.arrow.right")
+                }
+                
+                Toggle(isOn: $settings.desplegarComprasApiOld) {
+                    Label("Mostrar Compras de Api OLD", systemImage: "arrow.left.arrow.right")
+                }
+                
+                
+
             }
             
             Section(header: Text("Configuración de Tienda")) {

@@ -1,12 +1,11 @@
 import Foundation
 import Combine
 
+@MainActor
 class ProductViewModel: ObservableObject {
     @Published var products: [Product] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
-    @Published var ventas: [String: Venta] = [:]
-    @Published var citymallProds: [String: Resultado] = [:]
     
     private var apiService: APIService
     private var cancellables = Set<AnyCancellable>()
@@ -53,6 +52,7 @@ class ProductViewModel: ObservableObject {
         searchTask?.cancel()
         self.products = []
         self.currentPage = 1
+       // self.searchQuery=""
         self.canLoadMorePages = true
         loadMoreProducts()
     }
@@ -77,27 +77,21 @@ class ProductViewModel: ObservableObject {
                 switch selectedFilterType {
                 case "Todos":
                     let paginatedResponse = try await apiService.getProducts(page: currentPage)
-                    DispatchQueue.main.async {
-                        self.products.append(contentsOf: paginatedResponse.results)
-                        self.currentPage += 1
-                        self.canLoadMorePages = paginatedResponse.next != nil
-                        self.isLoading = false
-                    }
+                    self.products.append(contentsOf: paginatedResponse.results)
+                    self.currentPage += 1
+                    self.canLoadMorePages = paginatedResponse.next != nil
+                    self.isLoading = false
                 case "Código":
                     print("Fetching product by code: \(searchQuery)")
                     let product = try await apiService.getProductByCode(codigo: searchQuery)
                     print("Product fetched: \(product)")
 
                     // Immediately update the UI with the main product
-                    DispatchQueue.main.async {
-                        self.products = [product]
-                        self.canLoadMorePages = false
-                        self.isLoading = false
-                        self.justSearchedByCode = true
-                        self.searchQuery = ""
-                    }
-                    
-                    fetchProductDetails(for: product)
+                    self.products = [product]
+                    self.canLoadMorePages = false
+                    self.isLoading = false
+                    self.searchQuery = ""
+                    self.justSearchedByCode = true
                     return
                 default:
                     if Task.isCancelled { return }
@@ -109,12 +103,10 @@ class ProductViewModel: ObservableObject {
                     }
                     
                     if Task.isCancelled { return }
-                    DispatchQueue.main.async {
-                        self.products.append(contentsOf: filteredProducts)
-                        self.currentPage += 1
-                        self.canLoadMorePages = paginatedResponse.next != nil
-                        self.isLoading = false
-                    }
+                    self.products.append(contentsOf: filteredProducts)
+                    self.currentPage += 1
+                    self.canLoadMorePages = paginatedResponse.next != nil
+                    self.isLoading = false
                     
                     if paginatedResponse.next != nil {
                         await self.fetchAllRemainingPages()
@@ -125,42 +117,16 @@ class ProductViewModel: ObservableObject {
                     print("Search task cancelled.")
                     return
                 }
-                DispatchQueue.main.async {
-                    if let apiError = error as? APIError {
-                        self.errorMessage = apiError.localizedDescription
-                    } else {
-                        self.errorMessage = "Error desconocido: \(error.localizedDescription)"
-                    }
-                    self.isLoading = false
+                if let apiError = error as? APIError {
+                    self.errorMessage = apiError.localizedDescription
+                } else {
+                    self.errorMessage = "Error desconocido: \(error.localizedDescription)"
                 }
+                self.isLoading = false
             }
         }
     }
     
-    func fetchProductDetails(for product: Product) {
-        guard let codproducto = product.codproducto, let codigobarra = product.codigobarra else {
-            return
-        }
-
-        if ventas[codproducto] != nil {
-            return
-        }
-
-        Task {
-            print("Fetching details for product: \(codproducto)")
-            let venta = try? await apiService.getVentasMensuales(codproducto: codproducto)
-            let citymallProd = try? await apiService.getCitymallProduct(barCode: codigobarra)
-            
-            DispatchQueue.main.async {
-                if let venta = venta {
-                    self.ventas[codproducto] = venta
-                }
-                if let citymallProd = citymallProd {
-                    self.citymallProds[codproducto] = citymallProd
-                }
-            }
-        }
-    }
 
     private func fetchAllRemainingPages() async {
         while canLoadMorePages && !Task.isCancelled {
@@ -171,16 +137,12 @@ class ProductViewModel: ObservableObject {
                 }
                 
                 if Task.isCancelled { return }
-                DispatchQueue.main.async {
-                    self.products.append(contentsOf: filteredProducts)
-                    self.currentPage += 1
-                    self.canLoadMorePages = paginatedResponse.next != nil
-                }
+                self.products.append(contentsOf: filteredProducts)
+                self.currentPage += 1
+                self.canLoadMorePages = paginatedResponse.next != nil
             } catch {
                 if Task.isCancelled { return }
-                DispatchQueue.main.async {
-                    self.canLoadMorePages = false
-                }
+                self.canLoadMorePages = false
                 break
             }
         }
@@ -219,7 +181,5 @@ class ProductViewModel: ObservableObject {
         
         justSearchedByCode = true
         searchQuery = codproducto.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        fetchProductDetails(for: product)
     }
 }

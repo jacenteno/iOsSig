@@ -15,7 +15,11 @@ class SettingsManager: ObservableObject {
         static let clientApiUrl = "clientApiUrl"
         static let citymallApiUrl = "citymallApiUrl"
         static let citymallFronteraApiUrl = "citymallFronteraApiUrl"
+        
         static let useOldApi = "useOldApi"
+        static let desplegarVentasApiOld="desplegarVentasApiOld"
+        static let desplegarComprasApiOld="desplegarComprasApiOld"
+        
         static let companyCode = "companyCode"
         static let companyName = "companyName"
         static let warehouseCode = "warehouseCode"
@@ -45,6 +49,12 @@ class SettingsManager: ObservableObject {
     }
     @Published var useOldApi: Bool {
         didSet { defaults.set(useOldApi, forKey: Keys.useOldApi) }
+    }
+    @Published var desplegarVentasApiOld: Bool {
+        didSet { defaults.set(desplegarVentasApiOld, forKey: Keys.desplegarVentasApiOld) }
+    }
+    @Published var desplegarComprasApiOld: Bool {
+        didSet { defaults.set(desplegarComprasApiOld, forKey: Keys.desplegarComprasApiOld) }
     }
     @Published var companyCode: Int {
         didSet { defaults.set(companyCode, forKey: Keys.companyCode) }
@@ -95,6 +105,9 @@ class SettingsManager: ObservableObject {
         self.citymallApiUrl = defaults.string(forKey: Keys.citymallApiUrl) ?? "http://10.10.10.1:3000/"
         self.citymallFronteraApiUrl = defaults.string(forKey: Keys.citymallFronteraApiUrl) ?? "http://10.10.10.1:3001/"
         self.useOldApi = defaults.bool(forKey: Keys.useOldApi)
+        self.desplegarVentasApiOld = defaults.bool(forKey: Keys.desplegarVentasApiOld)
+        self.desplegarComprasApiOld = defaults.bool(forKey: Keys.desplegarComprasApiOld)
+        
         self.companyCode = defaults.object(forKey: Keys.companyCode) as? Int ?? 6
         self.companyName = defaults.string(forKey: Keys.companyName) ?? "CitMall David"
         self.warehouseCode = defaults.string(forKey: Keys.warehouseCode) ?? "03"

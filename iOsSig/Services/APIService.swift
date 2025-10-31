@@ -343,8 +343,14 @@ class APIService {
         guard let url = components?.url else {
             throw APIError.invalidURL
         }
+        
+        print("APIService: Calling URL: \(url.absoluteString)")
 
         let (data, response) = try await session.data(from: url)
+        
+        if let responseString = String(data: data, encoding: .utf8) {
+            print("APIService: Raw sales response: \(responseString)")
+        }
 
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
             throw APIError.invalidResponse
@@ -352,10 +358,11 @@ class APIService {
 
         do {
             let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .convertFromSnakeCase // Assuming API returns snake_case
-            let venta = try decoder.decode(Venta.self, from: data)
-            return venta
+            let ventaResponse = try decoder.decode(VentaResponse.self, from: data)
+            let trimmedCodProducto = ventaResponse.codproducto.trimmingCharacters(in: .whitespacesAndNewlines)
+            return Venta(codproducto: trimmedCodProducto, detalle: ventaResponse.detalle, ventasMensuales: ventaResponse.ventas_mensuales, totalVendido: ventaResponse.total_vendido, totalMonto: ventaResponse.total_monto)
         } catch {
+            print("APIService: Decoding error: \(error)")
             throw APIError.decodingError(error)
         }
     }
@@ -516,10 +523,10 @@ class APIService {
     }
 
     func getCitymallProduct(barCode: String) async throws -> Resultado {
-        let apiServiceCMF = APIServiceCMF(settings: settings, session: session)
+        let apiServiceCMD = APIServiceCMD(settings: settings, session: session)
         let codigoBarra = CodigoBarra(codigoBarra: barCode)
         let request = ConsultaCodigoBarraRequest(consultaCodigoBarra: codigoBarra)
-        let response = try await apiServiceCMF.consultaCodigoBarra(requestBody: request)
+        let response = try await apiServiceCMD.consultaCodigoBarra(requestBody: request)
         return response.resultado
     }
 }

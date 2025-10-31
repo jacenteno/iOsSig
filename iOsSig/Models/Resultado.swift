@@ -2,24 +2,24 @@ import Foundation
 
 struct Resultado: Codable {
     let errorcode: Int
-    let codigoproducto: String
-    let nombreproducto: String
-    let precioventa: Double
-    let nombreprecio: String
-    let codigoprecio: String
-    let nombremoneda: String
-    let simbolomoneda: String
-    let ultimocosto: Double
-    let referencia: String
-    let preciossucursales: [PrecioSucursal]
-    let existencias: Double
-    let tasaiva: Double
-    let imagenproducto: String
-    let nombreimagen: String
+    let codigoproducto: String?
+    let nombreproducto: String?
+    let precioventa: Double?
+    let nombreprecio: String?
+    let codigoprecio: String?
+    let nombremoneda: String?
+    let simbolomoneda: String?
+    let ultimocosto: Double?
+    let referencia: String?
+    let preciossucursales: [PrecioSucursal]?
+    let existencias: Double?
+    let tasaiva: Double?
+    let imagenproducto: String?
+    let nombreimagen: String?
     let estado: Bool
-    let ventas: Ventas
-    let compras: Compras
-    let infoData: [InfoData]
+    let ventas: Ventas?
+    let compras: Compras?
+    let infoData: [InfoData]?
 
     enum CodingKeys: String, CodingKey {
         case errorcode

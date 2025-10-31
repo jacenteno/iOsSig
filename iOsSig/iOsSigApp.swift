@@ -5,16 +5,18 @@ import SwiftUI
 struct iOsSigApp: App {
     // Carga una instancia del SettingsManager y la mantiene viva durante el ciclo de vida de la app.
     @StateObject private var settings = SettingsManager.shared
+    @StateObject private var cartManager = CartManager()
 
     var body: some Scene {
         WindowGroup {
             // Comprueba si la app está activada, similar a la lógica de MainActivity.kt
-           // if !settings.isActivated {
-            //    ActivationView()
-             //       .environmentObject(settings)
+           //if !settings.isActivated {
+              //  ActivationView()
+               //     .environmentObject(settings)
             //} else {
                 ContentView()
                     .environmentObject(settings)
+                    .environmentObject(cartManager)
            // }
         }
     }

@@ -1,6 +1,7 @@
 import Foundation
 
-struct Venta: Codable {
+struct Venta: Codable, Identifiable {
+    var id: String { codproducto }
     let codproducto: String
     let detalle: String
     let ventasMensuales: [VentaMensual]

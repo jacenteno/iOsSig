@@ -14,7 +14,7 @@ enum Compras: Codable {
             self = .mensaje(mensaje)
             return
         }
-        throw DecodingError.typeMismatch(Compras.self, DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Wrong type for Compras"))
+        throw DecodingError.typeMismatch(Compras.self, DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Compras can be either [CompraHistorial] or String"))
     }
 
     func encode(to encoder: Encoder) throws {
