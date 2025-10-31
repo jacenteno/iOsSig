@@ -1,6 +1,6 @@
 # SigApp - Sistema de Información Gerencial
 
-![Logo](iOsSig/Assets.xcassets/Image.imageset/Image.png)
+![Logo](iOsSig/Assets.xcassets/AppIcon.appiconset/180.png)
 
 ## Introducción
 
