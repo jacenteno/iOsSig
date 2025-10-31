@@ -1,6 +1,6 @@
 import Foundation
 
-struct RequestOrderResponse: Codable {
+struct RequestOrderResponse: Codable, Identifiable, Equatable {
     let id: Int
     let user: UserResponse
     let createdAt: String

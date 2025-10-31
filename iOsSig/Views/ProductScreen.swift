@@ -146,7 +146,7 @@ struct ProductScreen: View, CameraScannerViewDelegate {
     
     private var toolbarButtons: some View {
         HStack(spacing: 16) {
-            NavigationLink(destination: CurrentOrderScreen()) {
+            NavigationLink(destination: HacerPedidosScreen()) {
                 CartBadgeView()
             }
             
@@ -255,6 +255,7 @@ struct ProductCardView: View {
     @EnvironmentObject var cartManager: CartManager
     @State private var isHacerPedidosActive = false
     @State private var isEtiquetaActive = false
+    @State private var isShowingAddProductSheet = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -267,8 +268,8 @@ struct ProductCardView: View {
         }
         .background(
             VStack {
-                NavigationLink(destination: HacerPedidosScreen(), isActive: $isHacerPedidosActive) { EmptyView() }
-                NavigationLink(destination: EtiquetaScreen(), isActive: $isEtiquetaActive) { EmptyView() }
+                NavigationLink(destination: HacerPedidosScreen().environmentObject(cartManager), isActive: $isHacerPedidosActive) { EmptyView() }
+                NavigationLink(destination: EtiquetaScreen(product: product), isActive: $isEtiquetaActive) { EmptyView() }
             }
         )
         .cornerRadius(16)
@@ -290,6 +291,10 @@ struct ProductCardView: View {
             if !newValue {
                 viewModel.clearSearch()
             }
+        }
+        .sheet(isPresented: $isShowingAddProductSheet) {
+            AddProductToOrderView(product: product)
+                .environmentObject(cartManager)
         }
     }
     
@@ -594,9 +599,7 @@ struct ProductCardView: View {
     
                         ) {
     
-                            cartManager.addItem()
-    
-                            isHacerPedidosActive = true
+                            isShowingAddProductSheet = true
     
                         }
     

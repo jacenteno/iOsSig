@@ -13,7 +13,7 @@ struct SettingsView: View {
     // Para cerrar la vista modal
     @Environment(\.presentationMode) var presentationMode
 
-    private let masterPassword = "120525"
+    private let masterPassword = Secrets.getMasterPassword()
 
     var body: some View {
         NavigationView {

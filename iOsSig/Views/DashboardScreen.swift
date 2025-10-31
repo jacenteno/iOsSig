@@ -93,19 +93,6 @@ struct DashboardScreen: View {
                                                     )
                                                     .foregroundStyle(Color.customPrimary)
                                                 }
-                                                .chartXAxis {
-                                                    AxisMarks(values: .automatic) { value in
-                                                        AxisGridLine()
-                                                        AxisTick()
-                                                        AxisValueLabel {
-                                                            if let hour = value.as(String.self) {
-                                                                Text(hour)
-                                                                    .rotationEffect(.degrees(-45))
-                                                                    .offset(y: 10)
-                                                            }
-                                                        }
-                                                    }
-                                                }
                                                 .frame(height: 250)
                                             }
                                             .padding(.horizontal)

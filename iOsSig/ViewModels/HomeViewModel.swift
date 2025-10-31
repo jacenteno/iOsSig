@@ -118,6 +118,7 @@ class HomeViewModel: ObservableObject {
                 DispatchQueue.main.async {
                     self.ventaPorGrupoCaja = salesData.ventaPorGrupoCaja ?? [:]
                     self.ventaPorHoraGeneral = salesData.ventaPorHoraGeneral ?? [:]
+                    print("HomeViewModel: ventaPorHoraGeneral populated with \(self.ventaPorHoraGeneral.count) items.")
                     self.ventaPorGrupoCajaDetalle = salesData.ventaPorGrupoCajaDetalle ?? [:]
                     self.totalTickets = salesData.totalTickets ?? 0 // Renamed
                     self.totalFacturaDelMes = salesData.totalFacturaDelMes ?? 0.0

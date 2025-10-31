@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ProductDetailsButtons: View {
+    let product: Product
     let codproducto: String
     let venta: Venta?
     let citymallProd: Resultado?
@@ -18,7 +19,7 @@ struct ProductDetailsButtons: View {
                 NavigationLink(destination: VentasScreen(), isActive: $isVentasActive) { EmptyView() }
                 NavigationLink(destination: ComprasScreen(), isActive: $isComprasActive) { EmptyView() }
                 NavigationLink(destination: HacerPedidosScreen(), isActive: $isHacerPedidosActive) { EmptyView() }
-                NavigationLink(destination: EtiquetaScreen(), isActive: $isEtiquetaActive) { EmptyView() }
+                NavigationLink(destination: EtiquetaScreen(product: product), isActive: $isEtiquetaActive) { EmptyView() }
 
                 // Visible Buttons
                 Button(action: { onNavigateToCambioPrecio(codproducto) }) {

@@ -1,6 +1,6 @@
 import Foundation
 
-struct ProductDetailResponse: Codable {
+struct ProductDetailResponse: Codable, Equatable {
     let indexProductos: Int
     let codProducto: String
     let desProducto: String

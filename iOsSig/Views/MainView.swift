@@ -31,6 +31,9 @@ struct MainView: View {
         if role.hasPermission("VIEW_FRONTERA") { // Add Frontera with permission check
             items.append(TabItem(title: "Frontera", icon: "shippingbox.fill", view: AnyView(FronteraScreen())))
         }
+        if role.hasPermission("VIEW_ORDERS_LIST") {
+            items.append(TabItem(title: "Pedidos", icon: "list.bullet.rectangle.fill", view: AnyView(OrdersListScreen())))
+        }
         if role.hasPermission("VIEW_CLIENTS") {
             items.append(TabItem(title: "CityPuntos", icon: "person.2.fill", view: AnyView(ClienteScreen())))
         }

@@ -69,7 +69,10 @@ class SettingsManager: ObservableObject {
         didSet { defaults.set(precioCode, forKey: Keys.precioCode) }
     }
     @Published var operadorCode: Int {
-        didSet { defaults.set(operadorCode, forKey: Keys.operadorCode) }
+        didSet {
+            defaults.set(operadorCode, forKey: Keys.operadorCode)
+            print("SettingsManager: operadorCode saved with value: \(operadorCode)")
+        }
     }
     @Published var userRole: AppUserRole { // Changed type to AppUserRole
         didSet { defaults.set(userRole.rawValue, forKey: Keys.userRole) }
@@ -112,7 +115,9 @@ class SettingsManager: ObservableObject {
         self.companyName = defaults.string(forKey: Keys.companyName) ?? "CitMall David"
         self.warehouseCode = defaults.string(forKey: Keys.warehouseCode) ?? "03"
         self.precioCode = defaults.object(forKey: Keys.precioCode) as? Int ?? 1
-        self.operadorCode = defaults.object(forKey: Keys.operadorCode) as? Int ?? 1
+        let loadedOperadorCode = defaults.object(forKey: Keys.operadorCode) as? Int ?? 1
+        self.operadorCode = loadedOperadorCode
+        print("SettingsManager: operadorCode loaded with value: \(loadedOperadorCode)")
         self.userRole = AppUserRole(rawValue: defaults.string(forKey: Keys.userRole) ?? AppUserRole.ROL_0.rawValue) ?? .ROL_0 // Updated to use AppUserRole
         self.isActivated = defaults.bool(forKey: Keys.isActivated)
 

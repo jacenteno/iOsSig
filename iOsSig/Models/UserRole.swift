@@ -49,6 +49,7 @@ enum AppUserRole: String, CaseIterable, Codable {
                 "VIEW_CLIENTS",
                 "VIEW_DAVID",
                 "VIEW_FRONTERA",
+                "VIEW_ORDERS_LIST",
                 "VIEW_SALES",
                 "VIEW_PURCHASES",
                 "PRINT_LABELS",

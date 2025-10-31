@@ -34,6 +34,19 @@ class APIService {
     private var settings: SettingsManager
     private let session: URLSession
 
+    var productApiUrl: String {
+        settings.productApiUrl
+    }
+
+
+    var baseUrl: String {
+        var url = settings.productApiUrl
+        if url.hasSuffix("/") {
+            url.removeLast()
+        }
+        return url
+    }
+
     init(settings: SettingsManager = .shared) {
         self.settings = settings
         let configuration = URLSessionConfiguration.default
@@ -367,7 +380,30 @@ class APIService {
         }
     }
 
-    func getRequestOrderById(orderId: Int) async throws -> RequestOrderResponse {
+    func fetchAllRequests() async throws -> [RequestOrderResponse] {
+        let baseUrl = settings.productApiUrl
+        guard let url = URL(string: "\(baseUrl)api/warehouse/requests/") else {
+            throw APIError.invalidURL
+        }
+
+        let (data, response) = try await session.data(from: url)
+
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw APIError.invalidResponse
+        }
+
+        do {
+            let decoder = JSONDecoder()
+            let paginatedResponse = try decoder.decode(PaginatedOrderResponse.self, from: data)
+            return paginatedResponse.results
+        } catch {
+            throw APIError.decodingError(error)
+        }
+    }
+
+
+
+    func fetchRequestOrderById(orderId: Int) async throws -> RequestOrderResponse {
         let baseUrl = settings.productApiUrl // Assuming productApiUrl is the base for warehouse
         guard let url = URL(string: "\(baseUrl)api/warehouse/requests/\(orderId)/") else {
             throw APIError.invalidURL
@@ -406,13 +442,12 @@ class APIService {
 
         let (data, response) = try await session.data(for: request)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 || httpResponse.statusCode == 201 else {
             throw APIError.invalidResponse
         }
 
         do {
             let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .convertFromSnakeCase
             let requestOrderResponse = try decoder.decode(RequestOrderResponse.self, from: data)
             return requestOrderResponse
         } catch {
@@ -420,7 +455,7 @@ class APIService {
         }
     }
 
-    func getRequestOrders(employeeId: String) async throws -> PaginatedOrderResponse {
+    func fetchRequestOrders(employeeId: String) async throws -> PaginatedOrderResponse {
         let baseUrl = settings.productApiUrl // Assuming productApiUrl is the base for warehouse
         var components = URLComponents(string: "\(baseUrl)api/warehouse/requests/")
         components?.queryItems = [
@@ -461,7 +496,6 @@ class APIService {
 
         do {
             let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .convertFromSnakeCase
             let operatorResponse = try decoder.decode(Operator.self, from: data)
             return operatorResponse
         } catch {

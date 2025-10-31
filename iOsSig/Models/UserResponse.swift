@@ -1,6 +1,6 @@
 import Foundation
 
-struct UserResponse: Codable {
+struct UserResponse: Codable, Equatable {
     let employeeId: String
     let username: String
     let email: String

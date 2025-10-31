@@ -1,11 +1,15 @@
 import Foundation
 
-struct OrderItemResponse: Codable {
+struct OrderItemResponse: Codable, Equatable, Identifiable {
     let product: ProductDetailResponse
     let quantityUnits: Double
     let quantityBoxes: Double
     let quantityUnitsDispatched: Double
     let quantityBoxesDispatched: Double
+
+    var id: Int {
+        product.indexProductos
+    }
 
     enum CodingKeys: String, CodingKey {
         case product
