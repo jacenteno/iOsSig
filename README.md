@@ -25,39 +25,39 @@ La aplicación permite a los usuarios consultar información detallada de produc
 
 | Pantalla 1 | Pantalla 2 |
 | :---: | :---: |
-| ![Pantalla 1](docs/images/panta1.png) | ![Pantalla 2](docs/images/panta2.png) |
+| ![Pantalla 1](docs/images/panta2.png) | ![Pantalla 2](docs/images/panta3.png) |
 
 | Pantalla 3 | Pantalla 4 |
 | :---: | :---: |
-| ![Pantalla 3](docs/images/panta3.png) | ![Pantalla 4](docs/images/panta4.png) |
+| ![Pantalla 3](docs/images/panta4.png) | ![Pantalla 4](docs/images/panta5.png) |
 
 | Pantalla 5 | Pantalla 6 |
 | :---: | :---: |
-| ![Pantalla 5](docs/images/panta5.png) | ![Pantalla 6](docs/images/panta6.png) |
+| ![Pantalla 5](docs/images/panta6.png) | ![Pantalla 6](docs/images/panta7.png) |
 
 | Pantalla 7 | Pantalla 8 |
 | :---: | :---: |
-| ![Pantalla 7](docs/images/panta7.png) | ![Pantalla 8](docs/images/panta8.png) |
+| ![Pantalla 7](docs/images/panta8.png) | ![Pantalla 8](docs/images/panta9.png) |
 
 | Pantalla 9 | Pantalla 10 |
 | :---: | :---: |
-| ![Pantalla 9](docs/images/panta9.png) | ![Pantalla 10](docs/images/panta10.png) |
+| ![Pantalla 9](docs/images/panta10.png) | ![Pantalla 10](docs/images/panta11.png) |
 
 | Pantalla 11 | Pantalla 12 |
 | :---: | :---: |
-| ![Pantalla 11](docs/images/panta11.png) | ![Pantalla 12](docs/images/panta12.png) |
+| ![Pantalla 11](docs/images/panta12.png) | ![Pantalla 12](docs/images/panta13.png) |
 
 | Pantalla 13 | Pantalla 14 |
 | :---: | :---: |
-| ![Pantalla 13](docs/images/panta13.png) | ![Pantalla 14](docs/images/panta14.png) |
+| ![Pantalla 13](docs/images/panta14.png) | ![Pantalla 14](docs/images/panta15.png) |
 
 | Pantalla 15 | Pantalla 16 |
 | :---: | :---: |
-| ![Pantalla 15](docs/images/panta15.png) | ![Pantalla 16](docs/images/panta16.png) |
+| ![Pantalla 15](docs/images/panta16.png) | ![Pantalla 16](docs/images/panta17.png) |
 
-| Pantalla 17 | Pantalla 18 |
-| :---: | :---: |
-| ![Pantalla 17](docs/images/panta17.png) | ![Pantalla 18](docs/images/panta18.png) |
+| Pantalla 17 |
+| :---: |
+| ![Pantalla 17](docs/images/panta18.png) |
 ---
 
 ## Arquitectura
