@@ -188,4 +188,48 @@ class CoreDataStack {
             saveContext()
     
         }
+    
+    // MARK: - Overloaded functions for specific context
+    
+    func fetchProduct(byCode code: String, in context: NSManagedObjectContext) -> ProductEntity? {
+        let trimmedCode = code.trimmingCharacters(in: .whitespacesAndNewlines)
+        logger.info("🔍 Fetching product from Core Data with code: \(trimmedCode) in specific context.")
+        
+        let request: NSFetchRequest<ProductEntity> = ProductEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "codproducto == %@", trimmedCode)
+        
+        do {
+            let results = try context.fetch(request)
+            if let product = results.first {
+                logger.info("✅ Found product in specific context.")
+                return product
+            } else {
+                logger.warning("⚠️ Product not found in specific context.")
+                return nil
+            }
+        } catch {
+            logger.error("❌ Error fetching product in specific context: \(error.localizedDescription)")
+            return nil
+        }
+    }
+    
+    func saveProduct(_ product: Product, in context: NSManagedObjectContext) {
+        let code = product.codproducto?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "N/A"
+        logger.info("💾 Saving product to Core Data with code: \(code) in specific context.")
+        
+        let entity = fetchProduct(byCode: code, in: context) ?? ProductEntity(context: context)
+        
+        entity.codproducto = product.codproducto?.trimmingCharacters(in: .whitespacesAndNewlines)
+        entity.desproducto = product.desproducto
+        entity.codigobarra = product.codigobarra?.trimmingCharacters(in: .whitespacesAndNewlines)
+        entity.preciodeventa = product.preciodeventa ?? 0.0
+        entity.existencias = product.existencias ?? 0.0
+        entity.ultcosto = product.ultcosto ?? 0.0
+        entity.referencia = product.referencia?.trimmingCharacters(in: .whitespacesAndNewlines)
+        entity.nombre_departamento = product.nombre_departamento
+        entity.codbodega = product.codbodega?.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        logger.info("👍 Product data mapped to entity in specific context.")
+        // No need to call saveContext() here, as the caller of this method will handle saving the context.
+    }
 }

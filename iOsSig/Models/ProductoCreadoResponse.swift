@@ -1,19 +1,27 @@
 import Foundation
 
 struct ProductoCreadoResponse: Codable {
-    let indexproductos: Int?
+    let codcompania: String?
+    let codbodega: String?
+    let coddep: Int?
     let codproducto: String?
     let desproducto: String?
-    let gravadoexecto: String
-    let preciodeventa: Double
-    let codgrprecio: Int
+    let prcimpuestoventa: Double?
+    let gravadoexecto: String?
+    let fechaultmodifica: Int?
+    let fechacreacion: Int?
+    let indexproductos: Int?
 
     enum CodingKeys: String, CodingKey {
-        case indexproductos
+        case codcompania
+        case codbodega
+        case coddep
         case codproducto
-        case desproducto = "descproducto"
+        case desproducto
+        case prcimpuestoventa
         case gravadoexecto
-        case preciodeventa
-        case codgrprecio
+        case fechaultmodifica
+        case fechacreacion
+        case indexproductos
     }
 }

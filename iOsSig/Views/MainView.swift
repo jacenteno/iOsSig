@@ -6,6 +6,7 @@ struct MainView: View {
     // Estados para controlar la presentación de vistas y alertas
     @State private var showSettings = false
     @State private var showAboutAlert = false
+    @State private var showSyncView = false // Estado para la navegación de Sync
     @State private var refreshID = UUID() // New state variable for refreshing UI
 
     // Estados para la navegación programática desde el menú
@@ -20,7 +21,7 @@ struct MainView: View {
 
         // La lógica de permisos la puedes ajustar en UserRole.swift
         if role.hasPermission("VIEW_HOME") {
-            items.append(TabItem(title: "Inicio", icon: "house.fill", view: AnyView(HomeScreen(version: version, requestCode: requestCode))))
+            items.append(TabItem(title: "Inicio", icon: "house.fill", view: AnyView(HomeScreen(version: version, requestCode: requestCode, showSettings: $showSettings))))
         }
         if role.hasPermission("VIEW_DASHBOARD") { // Add Dashboard with permission check
             items.append(TabItem(title: "Panel Vtas", icon: "chart.bar.fill", view: AnyView(DashboardScreen())))
@@ -37,6 +38,9 @@ struct MainView: View {
         if role.hasPermission("VIEW_CLIENTS") {
             items.append(TabItem(title: "CityPuntos", icon: "person.2.fill", view: AnyView(ClienteScreen())))
         }
+        if role.hasPermission("VIEW_PRODUCTS") { // Assuming VIEW_PRODUCTS is sufficient for offline consultation
+            items.append(TabItem(title: "Consulta Offline", icon: "magnifyingglass", view: AnyView(OfflineProductsView())))
+        }
         if settings.useOldApi && role.hasPermission("VIEW_DAVID") {
           //  items.append(TabItem(title: "David", icon: "person.fill", view: AnyView(Text("Muy Pronto").font(.largeTitle))))
         }
@@ -47,18 +51,12 @@ struct MainView: View {
         TabView {
             ForEach(tabItems) {
                 item in
-                // Cada pestaña tiene su propio NavigationView para mantener su estado de navegación
-                // Cada pestaña tiene su propio NavigationView para mantener su estado de navegación
                 NavigationView {
                     item.view
                         .navigationTitle(item.title)
                         .toolbar {
-                            // Agrupamos los botones de la barra de navegación
                             ToolbarItemGroup(placement: .navigationBarTrailing) {
-                                // Botón de Menú
-                                AppMenuView(showAboutAlert: $showAboutAlert)
-
-                                // Botón de Configuración
+                                AppMenuView(showAboutAlert: $showAboutAlert, showSyncView: $showSyncView)
                                 Button(action: { showSettings = true }) {
                                     Image(systemName: "gearshape.fill")
                                 }
@@ -79,6 +77,9 @@ struct MainView: View {
         }) {
             SettingsView().environmentObject(settings)
         }
+        .sheet(isPresented: $showSyncView) { // Present SyncProductsView as a sheet
+            NavigationView { SyncProductsView() }
+        }
         .alert("Acerca de SigApp", isPresented: $showAboutAlert) {
             Button("Cerrar", role: .cancel) {}
         } message: {
@@ -89,24 +90,41 @@ struct MainView: View {
 
 struct AppMenuView: View {
     @EnvironmentObject var settings: SettingsManager
+    @StateObject private var syncViewModel = SyncProductsViewModel.shared
     
     // Bindings para controlar alertas y navegación
     @Binding var showAboutAlert: Bool
+    @Binding var showSyncView: Bool
 
     var body: some View {
-      
-        
         Menu {
-            // Sección de Información
-            Section {
-                Button(action: { showAboutAlert = true }) {
-                  //  Label("Acerca de", systemName: "info.circle")
+            // Sección de Herramientas
+            Section(header: Text("Herramientas")) {
+                Button(action: { showSyncView = true }) {
+                    HStack {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                        Text("Sincronizar Productos")
+                    }
                 }
             }
-            
+
+            // Sección de Información
+            Section(header: Text("Información")) {
+                Button(action: { showAboutAlert = true }) {
+                    HStack {
+                        Image(systemName: "info.circle")
+                        Text("Acerca de")
+                    }
+                }
+            }
         } label: {
-            // El ícono que se muestra en la barra de navegación
-            Image(systemName: "ellipsis.circle")
+            HStack {
+                if syncViewModel.isSyncing {
+                    ProgressView()
+                        .padding(.trailing, 4)
+                }
+                Image(systemName: "ellipsis.circle")
+            }
         }
     }
 }
@@ -126,4 +144,3 @@ struct MainView_Previews: PreviewProvider {
             .environmentObject(SettingsManager.shared)
     }
 }
-

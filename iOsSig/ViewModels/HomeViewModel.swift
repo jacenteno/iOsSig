@@ -77,7 +77,7 @@ class HomeViewModel: ObservableObject {
 
     init(apiService: APIService = APIService()) {
         self.apiService = apiService
-        fetchSalesData() // Fetch data immediately on init
+        // fetchSalesData() // Fetch data immediately on init
         startTimer()
     }
 

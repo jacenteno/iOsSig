@@ -72,10 +72,40 @@ extension Product {
         self.codigo_consultado = nil
         self.lista_referencia = nil
     }
-}
 
-// Mock para previews de SwiftUI
-extension Product {
+    init(entity: ProductEntity) {
+        self.codcompania = nil
+        self.codbodega = entity.codbodega
+        self.coddep = nil
+        self.desproducto = entity.desproducto
+        self.detalle = nil
+        self.codigobarra = entity.codigobarra
+        self.codproducto = entity.codproducto
+        self.codproveedor = nil
+        self.referencia = entity.referencia
+        self.nombre_departamento = entity.nombre_departamento
+        self.ultcosto = entity.ultcosto
+        self.existencias = entity.existencias
+        self.ubicacion = nil
+        self.ofertas = nil
+        self.ucosto = nil
+        self.costofob = nil
+        self.indexproductos = nil
+        self.costooriginal = nil
+        self.preciodeventa = entity.preciodeventa
+        self.fvencimiento = nil
+        self.ctacontable = nil
+        self.bloqueofacturacion = nil
+        self.gravadoexecto = nil
+        self.prcimpuestoventa = nil
+        self.nombre_lista_precio = nil
+        self.listas_de_precio = nil
+        self.series_asociadas = nil
+        self.codigo_consultado = nil
+        self.lista_referencia = nil
+    }
+
+    // Mock para previews de SwiftUI
     static var sample: Product {
         Product(
             codcompania: 1,

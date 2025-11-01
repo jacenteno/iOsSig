@@ -57,6 +57,7 @@ enum AppUserRole: String, CaseIterable, Codable {
                 "VIEW_COSTO",
                 "VIEW_INVENTARIO",
                 "VIEW_OFFLINE",
+                "CREAR_PRODUCTO",
                 "VIEW_PEDIDOS"
                 
             ])

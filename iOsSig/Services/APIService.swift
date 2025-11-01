@@ -4,7 +4,7 @@ import Foundation
 enum APIError: Error, CustomStringConvertible, LocalizedError {
     case invalidURL
     case requestFailed(Error)
-    case invalidResponse
+    case serverError(statusCode: Int)
     case decodingError(Error)
     case clientNotFound
 
@@ -14,8 +14,8 @@ enum APIError: Error, CustomStringConvertible, LocalizedError {
             return "La URL especificada no es válida."
         case .requestFailed(let error):
             return "La solicitud de red falló: \(error.localizedDescription)"
-        case .invalidResponse:
-            return "Se recibió una respuesta inválida del servidor."
+        case .serverError(let statusCode):
+            return "Error del servidor con código: \(statusCode)"
         case .decodingError(let error):
             return "Error al decodificar la respuesta del servidor: \(error.localizedDescription)"
         case .clientNotFound:
@@ -30,6 +30,8 @@ enum APIError: Error, CustomStringConvertible, LocalizedError {
 
 // Equivalente a tu ApiService de Retrofit
 class APIService {
+    static let shared = APIService()
+
     // Usamos el SettingsManager para obtener la URL base dinámicamente
     private var settings: SettingsManager
     private let session: URLSession
@@ -62,20 +64,19 @@ class APIService {
             throw APIError.invalidURL
         }
 
+        let (data, response) = try await session.data(from: url)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1) // Or some other default/indicator
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
+        }
         do {
-                    let (data, response) = try await session.data(from: url)
-            
-                    guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                        throw APIError.invalidResponse
-                    }
-                        do {
-                let product = try JSONDecoder().decode(Product.self, from: data)
-                return product
-            } catch {
-                throw APIError.decodingError(error)
-            }
+            let product = try JSONDecoder().decode(Product.self, from: data)
+            return product
         } catch {
-            throw APIError.requestFailed(error)
+            throw APIError.decodingError(error)
         }
     }
 
@@ -94,8 +95,11 @@ class APIService {
 
         let (_, response) = try await session.data(for: request)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 || httpResponse.statusCode == 204 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 || httpResponse.statusCode == 204 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
         // No se espera contenido en la respuesta, solo el código de éxito
     }
@@ -113,8 +117,11 @@ class APIService {
 
         let (data, response) = try await session.data(from: url)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -139,8 +146,11 @@ class APIService {
 
         let (data, response) = try await session.data(from: url)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -165,8 +175,11 @@ class APIService {
 
         let (data, response) = try await session.data(from: url)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
         return data
     }
@@ -184,8 +197,11 @@ class APIService {
 
         let (data, response) = try await session.data(from: url)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -212,8 +228,11 @@ class APIService {
             print("APIService: Raw API Response Data for Online Sales: \(responseString)")
         }
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -241,8 +260,11 @@ class APIService {
 
         let (data, response) = try await session.data(for: request)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -268,8 +290,11 @@ class APIService {
 
         let (data, response) = try await session.data(from: url)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -291,8 +316,11 @@ class APIService {
 
         let (data, response) = try await session.data(from: url)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -312,8 +340,11 @@ class APIService {
 
         let (data, response) = try await session.data(from: url)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -333,8 +364,11 @@ class APIService {
 
         let (data, response) = try await session.data(from: url)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -365,8 +399,11 @@ class APIService {
             print("APIService: Raw sales response: \(responseString)")
         }
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -388,8 +425,11 @@ class APIService {
 
         let (data, response) = try await session.data(from: url)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -411,8 +451,11 @@ class APIService {
 
         let (data, response) = try await session.data(from: url)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -442,8 +485,11 @@ class APIService {
 
         let (data, response) = try await session.data(for: request)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 || httpResponse.statusCode == 201 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 || httpResponse.statusCode == 201 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -468,8 +514,11 @@ class APIService {
 
         let (data, response) = try await session.data(from: url)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -490,8 +539,11 @@ class APIService {
 
         let (data, response) = try await session.data(from: url)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -511,8 +563,11 @@ class APIService {
 
         let (data, response) = try await session.data(from: url)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -542,8 +597,15 @@ class APIService {
 
         let (data, response) = try await session.data(for: request)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 || httpResponse.statusCode == 201 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
+        }
+
+        if let responseString = String(data: data, encoding: .utf8) {
+            print("APIService: Raw response from createProducto: \(responseString)")
         }
 
         do {

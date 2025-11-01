@@ -18,6 +18,7 @@ struct ProductoParaCrear: Codable {
     let listasDePrecio: [ListaDePrecioParaCrear]
     let gravadoexecto: String
     let preciodeventa: Double
+    let prcimpuestoventa: Double
     let codgrprecio: Int
 
     enum CodingKeys: String, CodingKey {
@@ -38,6 +39,7 @@ struct ProductoParaCrear: Codable {
         case listasDePrecio = "listas_de_precio"
         case gravadoexecto
         case preciodeventa
+        case prcimpuestoventa
         case codgrprecio
     }
 }

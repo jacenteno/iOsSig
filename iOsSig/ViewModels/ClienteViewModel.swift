@@ -54,8 +54,8 @@ class ClienteViewModel: ObservableObject {
                     } else {
                         self.error = "Error de solicitud: \(underlyingError.localizedDescription)"
                     }
-                case .invalidResponse:
-                    self.error = "Respuesta inválida del servidor."
+                case .serverError(let statusCode):
+                    self.error = "Error del servidor: \(statusCode)"
                 case .decodingError(let underlyingError):
                     self.error = "Error de decodificación: \(underlyingError.localizedDescription)"
                 case .clientNotFound:
@@ -98,8 +98,8 @@ class ClienteViewModel: ObservableObject {
                     } else {
                         self.error = "Error de solicitud: \(underlyingError.localizedDescription)"
                     }
-                case .invalidResponse:
-                    self.error = "Respuesta inválida del servidor."
+                case .serverError(let statusCode):
+                    self.error = "Error del servidor: \(statusCode)"
                 case .decodingError(let underlyingError):
                     self.error = "Error de decodificación: \(underlyingError.localizedDescription)"
                 case .clientNotFound:

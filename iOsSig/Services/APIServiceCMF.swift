@@ -50,7 +50,7 @@ class APIServiceCMF {
 
         guard let httpResponse = response as? HTTPURLResponse else {
             logger.error("❌ Response no es HTTPURLResponse")
-            throw APIError.invalidResponse
+            throw APIError.serverError(statusCode: -1)
         }
         
         logger.info("📊 Status code: \(httpResponse.statusCode)")
@@ -58,7 +58,7 @@ class APIServiceCMF {
         
         guard httpResponse.statusCode == 200 else {
             logger.error("❌ Status code inválido: \(httpResponse.statusCode)")
-            throw APIError.invalidResponse
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         if data.isEmpty {
@@ -125,14 +125,14 @@ class APIServiceCMF {
 
         guard let httpResponse = response as? HTTPURLResponse else {
             logger.error("❌ Response no es HTTPURLResponse")
-            throw APIError.invalidResponse
+            throw APIError.serverError(statusCode: -1)
         }
         
         logger.info("📊 Status code: \(httpResponse.statusCode)")
         
         guard httpResponse.statusCode == 200 else {
             logger.error("❌ Status code inválido: \(httpResponse.statusCode)")
-            throw APIError.invalidResponse
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         if data.isEmpty {

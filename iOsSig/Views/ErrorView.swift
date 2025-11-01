@@ -1,10 +1,11 @@
+
 import SwiftUI
 
 struct ErrorView: View {
     let errorMessage: String
     let retryAction: () -> Void
-    @Binding var isShowingError: Bool // New binding to control visibility
-    @State private var countdown: Int = 5 // Initial countdown in seconds
+    @Binding var isShowingError: Bool
+    var showSettings: Binding<Bool>?
 
     var body: some View {
         VStack(spacing: 20) {
@@ -25,7 +26,7 @@ struct ErrorView: View {
             }
 
             Button(action: {
-                isShowingError = false // Dismiss immediately on manual retry
+                isShowingError = false
                 retryAction()
             }) {
                 Text("Reintentar")
@@ -36,24 +37,34 @@ struct ErrorView: View {
                     .foregroundColor(.white)
                     .cornerRadius(12)
             }
+
+            if let showSettings = showSettings {
+                Button(action: {
+                    isShowingError = false
+                    showSettings.wrappedValue = true
+                }) {
+                    Text("Configuración")
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.orange)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                }
+            }
+            
+            Button(action: {
+                isShowingError = false
+            }) {
+                Text("Cerrar")
+                    .fontWeight(.semibold)
+            }
+            .padding(.top)
         }
         .padding(30)
         .background(Color(UIColor.systemBackground))
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
         .padding()
-        .onAppear(perform: setupDismissTimer)
-    }
-
-    private func setupDismissTimer() {
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
-            if countdown > 0 {
-                countdown -= 1
-            } else {
-                timer.invalidate()
-                isShowingError = false // Dismiss the view
-                retryAction() // Also trigger retry when dismissed
-            }
-        }
     }
 }

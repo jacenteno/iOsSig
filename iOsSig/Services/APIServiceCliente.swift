@@ -21,13 +21,13 @@ class APIServiceCliente {
         let (data, response) = try await URLSession.shared.data(from: url)
 
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
+            throw APIError.serverError(statusCode: -1)
         }
 
         if httpResponse.statusCode == 404 {
             throw APIError.clientNotFound
         } else if httpResponse.statusCode != 200 {
-            throw APIError.invalidResponse
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
@@ -48,8 +48,11 @@ class APIServiceCliente {
 
         let (data, response) = try await URLSession.shared.data(from: url)
 
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.serverError(statusCode: -1)
+        }
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {

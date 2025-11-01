@@ -1,3 +1,4 @@
+
 import SwiftUI
 import Combine
 
@@ -8,6 +9,7 @@ struct HomeScreen: View {
     
     let version: String
     let requestCode: String
+    @Binding var showSettings: Bool
    
     @State private var showError: Bool = false // State to control ErrorView presentation
     
@@ -55,8 +57,11 @@ struct HomeScreen: View {
                 }
                 .padding(.vertical)
             }
+            .onAppear {
+                viewModel.fetchSalesData()
+            }
             .sheet(isPresented: $showError) {
-                ErrorView(errorMessage: viewModel.error ?? "Error desconocido", retryAction: { viewModel.fetchSalesData() }, isShowingError: $showError)
+                ErrorView(errorMessage: viewModel.error ?? "Error desconocido", retryAction: { viewModel.fetchSalesData() }, isShowingError: $showError, showSettings: $showSettings)
             }
             .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
             .navigationTitle("Resumen de Ventas de hoy")
@@ -222,7 +227,8 @@ struct SummaryCard: View {
 
 struct HomeScreen_Previews: PreviewProvider {
     static var previews: some View {
-        HomeScreen(version: "1.0.0", requestCode: "XYZ-789")
+        HomeScreen(version: "1.0.0", requestCode: "XYZ-789", showSettings: .constant(false))
             .environmentObject(SettingsManager.shared)
     }
 }
+
