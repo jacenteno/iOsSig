@@ -118,9 +118,21 @@ struct DashboardScreen: View {
             }
             .padding(.horizontal)
 
-            // Detalle por Área y Caja - Replaced with Summary Table
-            CashRegisterSummaryTableView(summaryItems: viewModel.cashRegisterSummaryForChart)
+            // Detalle por Área y Caja
+            Text("Detalle por Área y Caja")
+                .font(.title2)
                 .padding(.horizontal)
+
+            if viewModel.ventaPorGrupoCajaDetalle.isEmpty {
+                Text("No hay detalles de ventas por área disponibles.")
+                    .foregroundColor(.gray)
+                    .padding(.horizontal)
+            } else {
+                ForEach(viewModel.ventaPorGrupoCajaDetalle.values.sorted(by: { $0.nombre < $1.nombre })) { areaData in
+                    SalesAreaDetailCard(areaData: areaData)
+                        .padding(.horizontal)
+                }
+            }
             ChartCard(title: "Ventas por Hora") {
                 Chart(viewModel.salesByHourForChart) { item in
                     BarMark(
@@ -135,7 +147,7 @@ struct DashboardScreen: View {
 
             // New Chart: Ventas por Caja
             ChartCard(title: "Ventas por Caja") {
-                Chart(viewModel.cashRegisterSummaryForChart) { register in
+                Chart(viewModel.allCashRegistersForChart.sorted(by: { $0.monto > $1.monto })) { register in
                     BarMark(
                         x: .value("Monto", register.monto),
                         y: .value("Caja", register.nombre)
@@ -180,79 +192,121 @@ struct DashboardScreen: View {
     }
 }
 
-// --- New Summary Table View ---
-struct CashRegisterSummaryTableView: View {
-    let summaryItems: [HomeViewModel.ChartableCashRegisterSummary]
+// --- Helper Views --- 
+
+struct StatCardImproved: View {
+    let title: String
+    let value: String
+    let icon: String
+    let iconColor: Color
+
+    var body: some View {
+        CardView(title: title, value: value, icon: icon, iconColor: iconColor)
+    }
+}
+
+struct CardView: View {
+    let title: String
+    let value: String
+    let icon: String
+    let iconColor: Color
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.gray)
+            Spacer()
+            HStack {
+                Text(value)
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundColor(iconColor)
+                Spacer()
+                Image(systemName: icon)
+                    .font(.title)
+                    .foregroundColor(iconColor)
+            }
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(16)
+        .shadow(radius: 2)
+    }
+}
+
+struct ChartCard<Content: View>: View {
+    let title: String
+    let content: () -> Content
+
+    init(title: String, @ViewBuilder content: @escaping () -> Content) {
+        self.title = title
+        self.content = content
+    }
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text(title)
+                .font(.title2)
+                .fontWeight(.bold)
+                .padding(.bottom, 8)
+            content()
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(16)
+        .shadow(radius: 2)
+    }
+}
+
+struct SalesAreaDetailCard: View {
+    let areaData: AreaDetail
+    @State private var expanded: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Card Header
-            HStack(spacing: 12) {
-                Image(systemName: "desktopcomputer")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.accentColor)
-                Text("Reporte de Ventas por Terminal")
-                    .font(.title2)
-                    .fontWeight(.bold)
-            }
-            .padding([.horizontal, .top])
-            .padding(.bottom, 8)
-
-            // Column Headers
             HStack {
-                Text("CAJA")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Text("TRANS.")
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                Text("MONTO")
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-            }
-            .font(.caption)
-            .foregroundColor(.secondary)
-            .padding(.horizontal)
-            .padding(.bottom, 5)
-
-            Divider()
-
-            // Rows
-            if summaryItems.isEmpty {
-                HStack {
-                    Spacer()
-                    Text("No hay datos de ventas por terminal.")
+                Image(systemName: "building.2.fill")
+                    .font(.title3)
+                    .foregroundColor(.customPrimary)
+                VStack(alignment: .leading) {
+                    Text(areaData.nombre.trimmingCharacters(in: .whitespacesAndNewlines))
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+                    Text("Total: $\(areaData.totalMonto, specifier: "%.2f") (\(areaData.totalTransacciones) Tr.)")
+                        .font(.subheadline)
                         .foregroundColor(.secondary)
-                        .padding()
-                    Spacer()
                 }
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(summaryItems) { item in
-                        VStack(spacing: 0) {
-                            HStack {
-                                Text(item.nombre)
-                                    .font(.system(.body, design: .monospaced))
-                                    .fontWeight(.medium)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                
-                                Text("\(item.transacciones)")
-                                    .font(.system(.body, design: .monospaced))
-                                    .frame(maxWidth: .infinity, alignment: .trailing)
-                                
-                                Text(String(format: "$%.2f", item.monto))
-                                    .font(.system(.body, design: .monospaced))
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.accentColor)
-                                    .frame(maxWidth: .infinity, alignment: .trailing)
-                            }
-                            .padding(.vertical, 12)
-                            .padding(.horizontal)
+                Spacer()
+                Image(systemName: expanded ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
+                    .foregroundColor(.gray)
+                    .font(.title3)
+            }
+            .padding(.vertical, 12)
+            .padding(.horizontal)
+            .contentShape(Rectangle()) // Make entire row tappable
+            .onTapGesture {
+                withAnimation { expanded.toggle() }
+            }
 
-                            if item.id != summaryItems.last?.id {
-                                Divider()
-                            }
+            if expanded {
+                Divider().padding(.horizontal)
+                VStack(alignment: .leading, spacing: 8) {
+                    if areaData.cajas.isEmpty {
+                        Text("No hay cajas registradoras en esta área.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.top, 8)
+                    } else {
+                        ForEach(areaData.cajas.values.sorted(by: { $0.nombre < $1.nombre })) { registerDetail in
+                            CashRegisterRow(registerDetail: registerDetail)
                         }
                     }
                 }
+                .padding(.horizontal)
+                .padding(.top, 8)
+                .padding(.bottom, 12)
             }
         }
         .background(Color(.systemBackground))
@@ -261,8 +315,47 @@ struct CashRegisterSummaryTableView: View {
     }
 }
 
+struct CashRegisterRow: View {
+    let registerDetail: CashRegisterDetail
 
-// --- Helper Views --- 
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "point.3.connected.trianglepath.fill")
+                .font(.caption)
+                .foregroundColor(.customTeal)
+            Text(registerDetail.nombre.trimmingCharacters(in: .whitespacesAndNewlines))
+                .font(.subheadline)
+                .foregroundColor(.primary)
+            Spacer()
+            Text("\(registerDetail.transacciones) Tr.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            Text(String(format: "$%.2f", registerDetail.monto))
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundColor(.customGreen)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+extension Color {
+    static let customPrimary = Color.red // Equivalent to colorScheme.primary in Kotlin
+    static let customError = Color.red // Equivalent to colorScheme.error in Kotlin
+    static let customOrange = Color(red: 0xFF / 255.0, green: 0xA0 / 255.0, blue: 0x00 / 255.0) // 0xFFFFA000
+    static let customGreen = Color(red: 0x38 / 255.0, green: 0x8E / 255.0, blue: 0x3C / 255.0) // 0xFF388E3C
+    static let customDeepPurple = Color(red: 0x5E / 255.0, green: 0x35 / 255.0, blue: 0xB1 / 255.0) // 0xFF5E35B1
+    static let customTeal = Color(red: 0x00 / 255.0, green: 0x89 / 255.0, blue: 0x7B / 255.0) // 0xFF00897B
+    static let customPinkRed = Color(red: 0xD8 / 255.0, green: 0x1B / 255.0, blue: 0x60 / 255.0) // 0xFFd81b60
+}
+
+struct DashboardScreen_Previews: PreviewProvider {
+    static var previews: some View {
+        DashboardScreen()
+            .environmentObject(SettingsManager.shared)
+    }
+}
+
 
 struct StatCardImproved: View {
     let title: String

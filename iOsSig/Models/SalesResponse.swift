@@ -70,7 +70,7 @@ struct SalesResponse: Decodable {
     enum CodingKeys: String, CodingKey {
         case ventaPorGrupoCaja = "venta_por_grupo_caja"
         case ventaPorHoraGeneral = "venta_por_hora_general"
-        case ventaPorGrupoCajaDetalle = "venta_por_grupo_caja_detalle"
+        case ventaPorGrupoCajaDetalle = "venta_por_grupo_caja_detlle"
         case totalTickets = "total_facturas" // Mapping to the old key
         case totalFacturaDelMes = "total_factura_del_mes"
         case totalClientes = "total_clientes"

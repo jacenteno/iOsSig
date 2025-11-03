@@ -61,25 +61,6 @@ class HomeViewModel: ObservableObject {
         }.sorted { $0.hour < $1.hour }
     }
 
-    // MARK: - Alternative Chart Data for Ventas por Caja
-
-    struct ChartableCashRegisterSummary: Identifiable {
-        let id = UUID()
-        let nombre: String
-        let monto: Double
-        let transacciones: Int
-    }
-
-    var cashRegisterSummaryForChart: [ChartableCashRegisterSummary] {
-        ventaPorCaja.map { (nombreCaja, summaryItem) in
-            ChartableCashRegisterSummary(
-                nombre: nombreCaja,
-                monto: summaryItem.monto,
-                transacciones: summaryItem.transacciones
-            )
-        }.sorted { $0.monto > $1.monto } // Sort by amount descending
-    }
-
     var allCashRegistersForChart: [CashRegisterDetail] {
         var allRegisters: [CashRegisterDetail] = []
         for areaDetail in ventaPorGrupoCajaDetalle.values {
