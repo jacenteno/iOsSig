@@ -33,8 +33,20 @@ struct SalesDetailView: View {
 
     private var summaryView: some View {
         HStack(spacing: 16) {
-            SummaryCard(title: "Total Vendido", value: Double(venta.totalVendido), icon: "cart.fill", format: .number, color: .blue)
-            SummaryCard(title: "Monto Total", value: Double(venta.totalMonto), icon: "dollarsign.circle.fill", format: .currency, color: .green)
+            SummaryCard(
+                title: "Total Vendido",
+                value: Double(venta.totalVendido),
+                icon: "cart.fill",
+                format: SummaryValueFormat.number,
+                color: .blue
+            )
+            SummaryCard(
+                title: "Monto Total",
+                value: Double(venta.totalMonto),
+                icon: "dollarsign.circle.fill",
+                format: SummaryValueFormat.currency,
+                color: .green
+            )
         }
     }
 

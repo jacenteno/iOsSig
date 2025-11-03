@@ -13,16 +13,36 @@ struct DashboardScreen: View {
     @State private var capturedImage: UIImage?
     @State private var isShowingShareSheet = false
     @State private var contentHeight: CGFloat = .zero
+    
+    // Animation states
+    @State private var cardsAppeared = false
+    @Namespace private var animation
 
     init() {}
 
     var body: some View {
         NavigationView {
             ZStack {
-                Color.gray.opacity(0.1).ignoresSafeArea()
+                // Modern gradient background
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(.systemBackground),
+                        Color.customPrimary.opacity(0.03),
+                        Color.customTeal.opacity(0.05)
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
 
                 if viewModel.isLoading && viewModel.ventaPorGrupoCaja.isEmpty {
-                    ProgressView()
+                    VStack(spacing: 20) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        Text("Cargando datos...")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
                 } else if let error = viewModel.error {
                     if !viewModel.products.isEmpty {
                         List(viewModel.products) { product in
@@ -41,6 +61,7 @@ struct DashboardScreen: View {
                 } else {
                     ScrollView {
                         dashboardContent
+                            .padding(.top, 8)
                     }
                     .refreshable {
                         viewModel.fetchSalesData()
@@ -57,296 +78,630 @@ struct DashboardScreen: View {
                 }
             }
             .navigationTitle("Dashboard")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    if viewModel.isLoading && !viewModel.ventaPorGrupoCaja.isEmpty {
-                        ProgressView()
-                    }
-                }
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
-                    Button(action: { 
-                        // Capture and share
+                    Button(action: {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                        impactFeedback.impactOccurred()
                         self.capturedImage = dashboardContent.asImage(size: CGSize(width: UIScreen.main.bounds.width, height: contentHeight))
                         self.isShowingShareSheet = true
                     }) {
                         Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.customPrimary)
+                            .padding(8)
+                            .background(
+                                Circle()
+                                    .fill(Color.customPrimary.opacity(0.1))
+                            )
                     }
                     
                     NavigationLink(destination: ProactiveAssistantView()) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.orange)
+                        ZStack {
+                            Circle()
+                                .fill(Color.orange.opacity(0.1))
+                                .frame(width: 36, height: 36)
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 16))
+                                .foregroundColor(.orange)
+                        }
                     }
                 }
             }
+
         }
         .onAppear {
+            viewModel.fetchSalesData()
             setupRefreshTimer()
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1)) {
+                cardsAppeared = true
+            }
         }
     }
     
     private var dashboardContent: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 20) {
+            // Hero Section - Venta Final
+            heroSection
+                .opacity(cardsAppeared ? 1 : 0)
+                .offset(y: cardsAppeared ? 0 : -20)
+            
             // Stats Grid
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                StatCardImproved(title: "Transacciones", value: String(viewModel.totalTransacciones), icon: "arrow.left.arrow.right", iconColor: .customOrange)
-                StatCardImproved(title: "Total Tickets", value: String(viewModel.totalTickets), icon: "doc.text", iconColor: .customPrimary)
-                StatCardImproved(title: "Ingresos", value: String(format: "$%.2f", viewModel.totalMontoIngreso), icon: "arrow.up.right", iconColor: .customGreen)
-                StatCardImproved(title: "Egresos", value: String(format: "$%.2f", viewModel.totalMontoEgreso), icon: "arrow.down.left", iconColor: .customError)
-                StatCardImproved(title: "Descuentos", value: String(format: "$%.2f", viewModel.finalDescuento), icon: "tag.fill", iconColor: .customDeepPurple)
-                StatCardImproved(title: "N. Crédito", value: String(format: "$%.2f", viewModel.totalMontoNotaCredito), icon: "creditcard.fill", iconColor: .customTeal)
-            }
-            .padding(.horizontal)
-
-            // Venta Final Card
-            CardView(title: "Venta Final Neta", value: String(format: "$%.2f", viewModel.totalMontoFinal), icon: "dollarsign.circle.fill", iconColor: .customPinkRed)
-                .padding(.horizontal)
-
-            // Chart 1: Ventas por Área
-            ChartCard(title: "Ventas por Área") {
-                Chart(viewModel.salesByAreaForChart) { item in
-                    BarMark(
-                        x: .value("Ventas", item.monto),
-                        y: .value("Área", item.nombre.trimmingCharacters(in: .whitespaces))
-                    )
-                    .foregroundStyle(by: .value("Área", item.nombre.trimmingCharacters(in: .whitespaces)))
-                }
-                .chartYAxis {
-                    AxisMarks(position: .leading)
-                }
-                .chartLegend(.hidden)
-                .frame(height: 200)
-            }
-            .padding(.horizontal)
-
-            // Detalle por Área y Caja
-            Text("Detalle por Área y Caja")
-                .font(.title2)
-                .padding(.horizontal)
-
-            if viewModel.ventaPorGrupoCajaDetalle.isEmpty {
-                Text("No hay detalles de ventas por área disponibles.")
-                    .foregroundColor(.gray)
-                    .padding(.horizontal)
-            } else {
-                ForEach(viewModel.ventaPorGrupoCajaDetalle.values.sorted(by: { $0.nombre < $1.nombre })) { areaData in
-                    SalesAreaDetailCard(areaData: areaData)
-                        .padding(.horizontal)
-                }
-            }
-            ChartCard(title: "Ventas por Hora") {
-                Chart(viewModel.salesByHourForChart) { item in
-                    BarMark(
-                        x: .value("Hora", item.hour),
-                        y: .value("Ventas", item.amount)
-                    )
-                    .foregroundStyle(Color.customPrimary)
-                }
-                .frame(height: 250)
-            }
-            .padding(.horizontal)
-
-            // New Chart: Ventas por Caja
-            ChartCard(title: "Ventas por Caja") {
-                Chart(viewModel.allCashRegistersForChart.sorted(by: { $0.monto > $1.monto })) { register in
-                    BarMark(
-                        x: .value("Monto", register.monto),
-                        y: .value("Caja", register.nombre)
-                    )
-                    .foregroundStyle(Color.customPrimary)
-                    .annotation(position: .trailing, alignment: .leading) {
-                        HStack {
-                            Text(String(format: "$%.2f", register.monto))
-                                .font(.system(size: 4))
-                                .foregroundColor(.primary)
-                            Text("(\(register.transacciones) Tr.)")
-                                .font(.system(size:4))
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-                .chartYAxis {
-                    AxisMarks(position: .leading)
-                }
-                .chartLegend(.hidden)
-                .frame(height: 250)
-            }
-            .padding(.horizontal)
+            statsGrid
+                .opacity(cardsAppeared ? 1 : 0)
+                .offset(y: cardsAppeared ? 0 : 20)
+            
+            // Charts Section
+            chartsSection
+                .opacity(cardsAppeared ? 1 : 0)
+            
+            // Details Section
+            detailsSection
+                .opacity(cardsAppeared ? 1 : 0)
         }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 20)
         .background(
             GeometryReader { proxy in
                 Color.clear.onAppear { self.contentHeight = proxy.size.height }
             }
         )
     }
+    
+    private var heroSection: some View {
+        VStack(spacing: 0) {
+            // Glassmorphism card effect
+            ZStack {
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.customPinkRed.opacity(0.8),
+                                Color.customPrimary.opacity(0.9)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .shadow(color: Color.customPinkRed.opacity(0.3), radius: 20, x: 0, y: 10)
+                
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Image(systemName: "dollarsign.circle.fill")
+                            .font(.system(size: 32))
+                            .foregroundColor(.white.opacity(0.9))
+                        Spacer()
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                            .font(.system(size: 24))
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                    
+                    Text("Venta Final Neta")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white.opacity(0.9))
+                    
+                    Text(String(format: "$%.2f", viewModel.totalMontoFinal))
+                        .font(.system(size: 42, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                    
+                    HStack(spacing: 16) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.up.right.circle.fill")
+                                .font(.caption)
+                            Text("\(viewModel.totalTransacciones) transacciones")
+                                .font(.caption)
+                        }
+                        .foregroundColor(.white.opacity(0.9))
+                        
+                        HStack(spacing: 4) {
+                            Image(systemName: "doc.text.fill")
+                                .font(.caption)
+                            Text("\(viewModel.totalTickets) tickets")
+                                .font(.caption)
+                        }
+                        .foregroundColor(.white.opacity(0.9))
+                    }
+                }
+                .padding(24)
+            }
+            .frame(height: 180)
+        }
+    }
+    
+    private var statsGrid: some View {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+            ModernStatCard(
+                title: "Ingresos",
+                value: String(format: "$%.2f", viewModel.totalMontoIngreso),
+                icon: "arrow.up.right",
+                iconColor: .customGreen,
+                gradientColors: [Color.customGreen.opacity(0.1), Color.customGreen.opacity(0.05)]
+            )
+            .transition(.scale.combined(with: .opacity))
+            
+            ModernStatCard(
+                title: "Egresos",
+                value: String(format: "$%.2f", viewModel.totalMontoEgreso),
+                icon: "arrow.down.left",
+                iconColor: .customError,
+                gradientColors: [Color.customError.opacity(0.1), Color.customError.opacity(0.05)]
+            )
+            .transition(.scale.combined(with: .opacity))
+            
+            ModernStatCard(
+                title: "Descuentos",
+                value: String(format: "$%.2f", viewModel.finalDescuento),
+                icon: "tag.fill",
+                iconColor: .customDeepPurple,
+                gradientColors: [Color.customDeepPurple.opacity(0.1), Color.customDeepPurple.opacity(0.05)]
+            )
+            .transition(.scale.combined(with: .opacity))
+            
+            ModernStatCard(
+                title: "N. Crédito",
+                value: String(format: "$%.2f", viewModel.totalMontoNotaCredito),
+                icon: "creditcard.fill",
+                iconColor: .customTeal,
+                gradientColors: [Color.customTeal.opacity(0.1), Color.customTeal.opacity(0.05)]
+            )
+            .transition(.scale.combined(with: .opacity))
+        }
+    }
+    
+    private var chartsSection: some View {
+        VStack(spacing: 16) {
+            // Ventas por Área
+            ModernChartCard(title: "Ventas por Área", icon: "chart.bar.fill", iconColor: .customPrimary) {
+                Chart(viewModel.salesByAreaForChart) { item in
+                    BarMark(
+                        x: .value("Ventas", item.monto),
+                        y: .value("Área", item.nombre.trimmingCharacters(in: .whitespaces))
+                    )
+                    .foregroundStyle(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.customPrimary, Color.customPrimary.opacity(0.7)]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .cornerRadius(6)
+                }
+                .chartYAxis {
+                    AxisMarks(position: .leading) { _ in
+                        AxisValueLabel()
+                            .font(.caption)
+                    }
+                }
+                .chartXAxis {
+                    AxisMarks { _ in
+                        AxisValueLabel()
+                            .font(.caption)
+                    }
+                }
+                .chartLegend(.hidden)
+                .frame(height: 220)
+            }
+            
+            // Ventas por Hora
+            ModernChartCard(title: "Ventas por Hora", icon: "clock.fill", iconColor: .customOrange) {
+                Chart(viewModel.salesByHourForChart) { item in
+                    BarMark(
+                        x: .value("Hora", item.hour),
+                        y: .value("Ventas", item.amount)
+                    )
+                    .foregroundStyle(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.customOrange, Color.customOrange.opacity(0.6)]),
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .cornerRadius(6)
+                }
+                .chartXAxis {
+                    AxisMarks { _ in
+                        AxisValueLabel()
+                            .font(.caption)
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks { _ in
+                        AxisValueLabel()
+                            .font(.caption)
+                    }
+                }
+                .frame(height: 220)
+            }
+            
+            // Ventas por Caja
+            ModernChartCard(title: "Ventas por Caja", icon: "square.grid.2x2.fill", iconColor: .customTeal) {
+                Chart(viewModel.allCashRegistersForChart.sorted(by: { $0.monto > $1.monto })) { register in
+                    BarMark(
+                        x: .value("Monto", register.monto),
+                        y: .value("Caja", register.nombre)
+                    )
+                    .foregroundStyle(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.customTeal, Color.customTeal.opacity(0.7)]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .cornerRadius(6)
+                    .annotation(position: .trailing, alignment: .leading) {
+                        HStack(spacing: 4) {
+                            Text(String(format: "$%.2f", register.monto))
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(.primary)
+                            Text("(\(register.transacciones))")
+                                .font(.system(size: 9))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(position: .leading) { _ in
+                        AxisValueLabel()
+                            .font(.caption)
+                    }
+                }
+                .chartXAxis {
+                    AxisMarks { _ in
+                        AxisValueLabel()
+                            .font(.caption)
+                    }
+                }
+                .chartLegend(.hidden)
+                .frame(height: 280)
+            }
+        }
+    }
+    
+    private var detailsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Image(systemName: "list.bullet.rectangle.fill")
+                    .font(.title3)
+                    .foregroundColor(.customPrimary)
+                Text("Detalle por Área y Caja")
+                    .font(.title2)
+                    .fontWeight(.bold)
+            }
+            
+            if viewModel.ventaPorGrupoCajaDetalle.isEmpty {
+                DashboardEmptyStateView()
+            } else {
+                ForEach(viewModel.ventaPorGrupoCajaDetalle.values.sorted(by: { $0.nombre < $1.nombre })) { areaData in
+                    ModernSalesAreaDetailCard(areaData: areaData)
+                }
+            }
+        }
+    }
 
     private func setupRefreshTimer() {
-        // This timer is purely for the UI countdown
         Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
             if self.refreshCountdown > 0 {
                 self.refreshCountdown -= 1
             } else {
-                // The ViewModel's timer will handle the fetch. We just reset the UI.
                 self.refreshCountdown = self.refreshInterval
             }
         }
     }
 }
 
-// --- Helper Views ---
+// --- Modern Helper Views ---
 
-struct StatCardImproved: View {
+struct ModernStatCard: View {
     let title: String
     let value: String
     let icon: String
     let iconColor: Color
+    let gradientColors: [Color]
+    
+    @State private var isPressed = false
 
     var body: some View {
-        CardView(title: title, value: value, icon: icon, iconColor: iconColor)
-    }
-}
-
-struct CardView: View {
-    let title: String
-    let value: String
-    let icon: String
-    let iconColor: Color
-
-    var body: some View {
-        VStack(alignment: .leading) {
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.gray)
-            Spacer()
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text(value)
-                    .font(.headline)
-                    .fontWeight(.bold)
-                    .foregroundColor(iconColor)
-                Spacer()
                 Image(systemName: icon)
-                    .font(.title)
+                    .font(.title3)
                     .foregroundColor(iconColor)
+                    .frame(width: 40, height: 40)
+                    .background(
+                        Circle()
+                            .fill(iconColor.opacity(0.15))
+                    )
+                Spacer()
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(.secondary)
+                
+                Text(value)
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
         }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(16)
-        .shadow(radius: 2)
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: 120)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color(.systemBackground))
+                
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: gradientColors),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(iconColor.opacity(0.1), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+        .scaleEffect(isPressed ? 0.96 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
+        .onTapGesture {
+            isPressed = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isPressed = false
+            }
+        }
     }
 }
 
-struct ChartCard<Content: View>: View {
+struct ModernChartCard<Content: View>: View {
     let title: String
+    let icon: String
+    let iconColor: Color
     let content: () -> Content
 
-    init(title: String, @ViewBuilder content: @escaping () -> Content) {
+    init(title: String, icon: String, iconColor: Color, @ViewBuilder content: @escaping () -> Content) {
         self.title = title
+        self.icon = icon
+        self.iconColor = iconColor
         self.content = content
     }
 
     var body: some View {
-        VStack(alignment: .leading) {
-            Text(title)
-                .font(.title2)
-                .fontWeight(.bold)
-                .padding(.bottom, 8)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundColor(iconColor)
+                    .frame(width: 36, height: 36)
+                    .background(
+                        Circle()
+                            .fill(iconColor.opacity(0.15))
+                    )
+                
+                Text(title)
+                    .font(.headline)
+                    .fontWeight(.bold)
+                
+                Spacer()
+            }
+            
             content()
         }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(16)
-        .shadow(radius: 2)
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.systemBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
     }
 }
 
-struct SalesAreaDetailCard: View {
+struct ModernSalesAreaDetailCard: View {
     let areaData: AreaDetail
     @State private var expanded: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Image(systemName: "building.2.fill")
-                    .font(.title3)
-                    .foregroundColor(.customPrimary)
-                VStack(alignment: .leading) {
-                    Text(areaData.nombre.trimmingCharacters(in: .whitespacesAndNewlines))
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                    Text("Total: $\(areaData.totalMonto, specifier: "%.2f") (\(areaData.totalTransacciones) Tr.)")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+            Button(action: {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    expanded.toggle()
                 }
-                Spacer()
-                Image(systemName: expanded ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
-                    .foregroundColor(.gray)
-                    .font(.title3)
+                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                impactFeedback.impactOccurred()
+            }) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color.customPrimary.opacity(0.2), Color.customPrimary.opacity(0.1)]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 44, height: 44)
+                        
+                        Image(systemName: "desktopcomputer")
+                            .font(.system(size: 20))
+                            .foregroundColor(.customPrimary)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(areaData.nombre.trimmingCharacters(in: .whitespacesAndNewlines))
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                        
+                        HStack(spacing: 12) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "dollarsign.circle.fill")
+                                    .font(.caption2)
+                                    .foregroundColor(.customGreen)
+                                Text("$\(areaData.totalMonto, specifier: "%.2f")")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.customGreen)
+                            }
+                            
+                            HStack(spacing: 4) {
+                                Image(systemName: "arrow.left.arrow.right.circle.fill")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                Text("\(areaData.totalTransacciones)")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    Image(systemName: expanded ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
+                        .font(.title3)
+                        .foregroundColor(expanded ? .customPrimary : .secondary)
+                        .rotationEffect(.degrees(expanded ? 0 : 0))
+                }
+                .padding(16)
             }
-            .padding(.vertical, 12)
-            .padding(.horizontal)
-            .contentShape(Rectangle()) // Make entire row tappable
-            .onTapGesture {
-                withAnimation { expanded.toggle() }
-            }
+            .buttonStyle(PlainButtonStyle())
 
             if expanded {
-                Divider().padding(.horizontal)
+                Divider()
+                    .padding(.horizontal, 16)
+                
                 VStack(alignment: .leading, spacing: 8) {
                     if areaData.cajas.isEmpty {
-                        Text("No hay cajas registradoras en esta área.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .padding(.top, 8)
+                        HStack {
+                            Image(systemName: "info.circle")
+                                .foregroundColor(.secondary)
+                            Text("No hay cajas registradas")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 16)
                     } else {
-                        ForEach(areaData.cajas.values.sorted(by: { $0.nombre < $1.nombre })) { registerDetail in
-                            CashRegisterRow(registerDetail: registerDetail)
+                        ForEach(areaData.cajas.values.sorted(by: { $0.monto > $1.monto })) { registerDetail in
+                            ModernCashRegisterRow(registerDetail: registerDetail)
                         }
                     }
                 }
-                .padding(.horizontal)
-                .padding(.top, 8)
-                .padding(.bottom, 12)
+                .padding(.vertical, 8)
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .background(Color(.systemBackground))
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(expanded ? Color.customPrimary.opacity(0.2) : Color.primary.opacity(0.06), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(expanded ? 0.08 : 0.04), radius: expanded ? 12 : 6, x: 0, y: expanded ? 6 : 3)
     }
 }
 
-struct CashRegisterRow: View {
+struct ModernCashRegisterRow: View {
     let registerDetail: CashRegisterDetail
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Image(systemName: "point.3.connected.trianglepath.fill")
-                .font(.caption)
+                .font(.system(size: 14))
                 .foregroundColor(.customTeal)
+                .frame(width: 28, height: 28)
+                .background(
+                    Circle()
+                        .fill(Color.customTeal.opacity(0.1))
+                )
+            
             Text(registerDetail.nombre.trimmingCharacters(in: .whitespacesAndNewlines))
                 .font(.subheadline)
+                .fontWeight(.medium)
                 .foregroundColor(.primary)
+            
             Spacer()
-            Text("\(registerDetail.transacciones) Tr.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            Text(String(format: "$%.2f", registerDetail.monto))
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundColor(.customGreen)
+            
+            HStack(spacing: 8) {
+                Text("\(registerDetail.transacciones)")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(Color.secondary.opacity(0.7))
+                    )
+                
+                Text(String(format: "$%.2f", registerDetail.monto))
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.customGreen)
+            }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.customTeal.opacity(0.03))
+        )
+        .padding(.horizontal, 16)
+    }
+}
+
+struct DashboardEmptyStateView: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "tray.fill")
+                .font(.system(size: 48))
+                .foregroundColor(.secondary.opacity(0.5))
+            
+            Text("No hay datos disponibles")
+                .font(.headline)
+                .foregroundColor(.secondary)
+            
+            Text("Los detalles aparecerán aquí cuando haya información")
+                .font(.caption)
+                .foregroundColor(.secondary.opacity(0.8))
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 40)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+        )
     }
 }
 
 extension Color {
-    static let customPrimary = Color.red // Equivalent to colorScheme.primary in Kotlin
-    static let customError = Color.red // Equivalent to colorScheme.error in Kotlin
-    static let customOrange = Color(red: 0xFF / 255.0, green: 0xA0 / 255.0, blue: 0x00 / 255.0) // 0xFFFFA000
-    static let customGreen = Color(red: 0x38 / 255.0, green: 0x8E / 255.0, blue: 0x3C / 255.0) // 0xFF388E3C
-    static let customDeepPurple = Color(red: 0x5E / 255.0, green: 0x35 / 255.0, blue: 0xB1 / 255.0) // 0xFF5E35B1
-    static let customTeal = Color(red: 0x00 / 255.0, green: 0x89 / 255.0, blue: 0x7B / 255.0) // 0xFF00897B
-    static let customPinkRed = Color(red: 0xD8 / 255.0, green: 0x1B / 255.0, blue: 0x60 / 255.0) // 0xFFd81b60
+    static let customPrimary = Color.red
+    static let customError = Color.red
+    static let customOrange = Color(red: 0xFF / 255.0, green: 0xA0 / 255.0, blue: 0x00 / 255.0)
+    static let customGreen = Color(red: 0x38 / 255.0, green: 0x8E / 255.0, blue: 0x3C / 255.0)
+    static let customDeepPurple = Color(red: 0x5E / 255.0, green: 0x35 / 255.0, blue: 0xB1 / 255.0)
+    static let customTeal = Color(red: 0x00 / 255.0, green: 0x89 / 255.0, blue: 0x7B / 255.0)
+    static let customPinkRed = Color(red: 0xD8 / 255.0, green: 0x1B / 255.0, blue: 0x60 / 255.0)
 }
 
 struct DashboardScreen_Previews: PreviewProvider {
