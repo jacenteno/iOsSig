@@ -2,6 +2,8 @@ import SwiftUI
 
 struct OfflineProductsView: View {
     @StateObject private var viewModel = OfflineProductsViewModel()
+    @EnvironmentObject var settings: SettingsManager
+    @Binding var isPresented: Bool
 
     var body: some View {
         VStack {
@@ -19,7 +21,8 @@ struct OfflineProductsView: View {
                 }
             } else {
                 List(viewModel.products) { product in
-                    ProductRow(product: product)
+                    ProductRow(product: product, isPresented: $isPresented)
+                        .environmentObject(settings)
                 }
             }
         }
@@ -30,6 +33,8 @@ struct OfflineProductsView: View {
 
 private struct ProductRow: View {
     let product: Product
+    @EnvironmentObject var settings: SettingsManager
+    @Binding var isPresented: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -97,12 +102,18 @@ private struct ProductRow: View {
             .font(.footnote)
         }
         .padding(.vertical, 8)
+        .onTapGesture(count: 2) {
+            print("OfflineProductsView: Double-tapped on product with code: \(product.codproducto ?? "N/A")")
+            settings.selectedProductCodeForSearch = product.codproducto
+            isPresented = false // Dismiss the sheet
+        }
     }
 }
 
 
 #Preview {
     NavigationView {
-        OfflineProductsView()
+        OfflineProductsView(isPresented: .constant(true))
+            .environmentObject(SettingsManager.shared)
     }
 }

@@ -81,6 +81,8 @@ class SettingsManager: ObservableObject {
         didSet { defaults.set(isActivated, forKey: Keys.isActivated) }
     }
 
+    @Published var selectedProductCodeForSearch: String? = nil
+
     // Configuración de la impresora
     enum PrinterConnectionType: String, CaseIterable, Codable {
         case none = "None"

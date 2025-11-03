@@ -136,6 +136,14 @@ struct DashboardScreen: View {
                                 ErrorView(errorMessage: viewModel.error ?? "Error desconocido", retryAction: { viewModel.fetchSalesData() }, isShowingError: $showError)
                             }
                                         .navigationTitle("Dashboard")
+                                        .toolbar {
+                                            ToolbarItem(placement: .navigationBarTrailing) {
+                                                NavigationLink(destination: ProactiveAssistantView()) {
+                                                    Image(systemName: "exclamationmark.triangle.fill")
+                                                        .foregroundColor(.orange)
+                                                }
+                                            }
+                                        }
                                     }                
         .onAppear {
             // The ViewModel now handles its own initial fetch

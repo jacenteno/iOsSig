@@ -618,11 +618,164 @@ class APIService {
         }
     }
 
-    func getCitymallProduct(barCode: String) async throws -> Resultado {
-        let apiServiceCMD = APIServiceCMD(settings: settings, session: session)
-        let codigoBarra = CodigoBarra(codigoBarra: barCode)
-        let request = ConsultaCodigoBarraRequest(consultaCodigoBarra: codigoBarra)
-        let response = try await apiServiceCMD.consultaCodigoBarra(requestBody: request)
-        return response.resultado
+        func getCitymallProduct(barCode: String) async throws -> Resultado {
+
+            let apiServiceCMD = APIServiceCMD(settings: settings, session: session)
+
+            let codigoBarra = CodigoBarra(codigoBarra: barCode)
+
+            let request = ConsultaCodigoBarraRequest(consultaCodigoBarra: codigoBarra)
+
+            let response = try await apiServiceCMD.consultaCodigoBarra(requestBody: request)
+
+            return response.resultado
+
+        }
+
+    
+
+            /// Obtiene productos agotados de la API con paginación y búsqueda opcional.
+
+    
+
+            func getAgotadoProducts(page: Int, searchQuery: String? = nil) async throws -> PaginatedAgotadoProductResponse {
+
+    
+
+                let baseUrl = settings.productApiUrl // Asumiendo que esta es la base para productos
+
+    
+
+                var components = URLComponents(string: "\(baseUrl)api/productos-agotados/")
+
+    
+
+                
+
+    
+
+                // Añadir paginación
+
+    
+
+                var queryItems = [URLQueryItem(name: "page", value: String(page))]
+
+    
+
+                
+
+    
+
+                // Añadir búsqueda si existe
+
+    
+
+                if let searchQuery = searchQuery, !searchQuery.isEmpty {
+
+    
+
+                    queryItems.append(URLQueryItem(name: "search", value: searchQuery))
+
+    
+
+                }
+
+    
+
+                
+
+    
+
+                components?.queryItems = queryItems
+
+    
+
+        
+
+    
+
+                guard let url = components?.url else {
+
+    
+
+                    throw APIError.invalidURL
+
+    
+
+                }
+
+    
+
+        
+
+    
+
+                let (data, response) = try await session.data(from: url)
+
+    
+
+        
+
+    
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+
+    
+
+                    throw APIError.serverError(statusCode: -1)
+
+    
+
+                }
+
+    
+
+                guard httpResponse.statusCode == 200 else {
+
+    
+
+                    throw APIError.serverError(statusCode: httpResponse.statusCode)
+
+    
+
+                }
+
+    
+
+        
+
+    
+
+                do {
+
+    
+
+                    let decoder = JSONDecoder()
+
+    
+
+                    let paginatedResponse = try decoder.decode(PaginatedAgotadoProductResponse.self, from: data)
+
+    
+
+                    return paginatedResponse
+
+    
+
+                } catch {
+
+    
+
+                    throw APIError.decodingError(error)
+
+    
+
+                }
+
+    
+
+            }
+
     }
-}
+
+    

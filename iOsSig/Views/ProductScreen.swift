@@ -8,6 +8,7 @@ struct ProductScreen: View, CameraScannerViewDelegate {
     @State private var navigateToCambioPrecio = false
     @State private var navigateToCreaProducto = false
     @State private var selectedProductCode: String? = nil
+    @State private var showOfflineSearch = false // Estado para la búsqueda offline
     @EnvironmentObject var settings: SettingsManager
     @EnvironmentObject var cartManager: CartManager
     @State private var showError: Bool = false // State to control ErrorView presentation
@@ -66,89 +67,104 @@ struct ProductScreen: View, CameraScannerViewDelegate {
         .sheet(isPresented: $navigateToCreaProducto) {
             CreaProductoView(codigoDeReferencia: viewModel.productNotFoundCode)
         }
+        .sheet(isPresented: $showOfflineSearch) {
+            NavigationView {
+                OfflineProductsView(isPresented: $showOfflineSearch)
+            }
+        }
+        .onAppear {
+            if let productCode = settings.selectedProductCodeForSearch {
+                viewModel.selectedFilterType = "Código"
+                viewModel.searchQuery = productCode
+                viewModel.searchProductByCode()
+                settings.selectedProductCodeForSearch = nil
+            }
+        }
+        .onChange(of: settings.selectedProductCodeForSearch) { newValue in
+            print("DEBUG: ProductScreen.onChange(selectedProductCodeForSearch) triggered with: \(newValue ?? "nil")")
+            if let productCode = newValue {
+                viewModel.selectedFilterType = "Código"
+                viewModel.searchQuery = productCode
+                viewModel.searchProductByCode()
+                settings.selectedProductCodeForSearch = nil
+            }
+        }
     }
     
     // MARK: - Subviews
     
     private var searchHeaderView: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 12) {
-                // Search Field
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.secondary)
-                    
-                    TextField("Buscar productos...", text: $viewModel.searchQuery, onCommit: {
-                        viewModel.searchProductByCode()
-                    })
-                    .textFieldStyle(.plain)
-                    
-                    if !viewModel.searchQuery.isEmpty {
-                        Button(action: {
-                            withAnimation {
-                                viewModel.searchQuery = ""
-                            }
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.secondary)
+        HStack(spacing: 12) {
+            // Search Field
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.secondary)
+                
+                TextField("Buscar productos...", text: $viewModel.searchQuery, onCommit: {
+                    viewModel.searchProductByCode()
+                })
+                .textFieldStyle(.plain)
+                
+                if !viewModel.searchQuery.isEmpty {
+                    Button(action: {
+                        withAnimation {
+                            viewModel.searchQuery = ""
                         }
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
                     }
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(Color(.systemGray5))
-                .cornerRadius(12)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Color(.systemGray5))
+            .cornerRadius(12)
 
-                // Search button
+            // Action Buttons
+            HStack(spacing: 0) {
                 Button(action: {
                     viewModel.searchProductByCode()
                 }) {
                     Image(systemName: "arrow.right.circle.fill")
                         .font(.title3)
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(Color.accentColor)
-                        .cornerRadius(12)
                 }
                 .disabled(viewModel.searchQuery.isEmpty)
-                
-                // Scanner Button
+                .padding(10)
+
+                Divider().frame(height: 20)
+
                 Button(action: {
                     isShowingScanner = true
                 }) {
                     Image(systemName: "barcode.viewfinder")
                         .font(.title3)
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(Color.accentColor)
-                        .cornerRadius(12)
                 }
-                
-                // Filter Toggle
-                Button(action: {
-                    print("Filter toggle button tapped. showFilters is now \(!showFilters)")
-                    showFilters.toggle()
-                }) {
-                    Image(systemName: showFilters ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                        .font(.title3)
-                        .foregroundColor(showFilters ? .white : .accentColor)
-                        .frame(width: 44, height: 44)
-                        .background(showFilters ? Color.accentColor : Color(.systemGray5))
-                        .cornerRadius(12)
-                }
+                .padding(10)
 
-                // Clear Button
+                Divider().frame(height: 20)
+
+                Button(action: {
+                    showOfflineSearch = true
+                }) {
+                    Image(systemName: "archivebox.fill")
+                        .font(.title3)
+                }
+                .padding(10)
+
+                Divider().frame(height: 20)
+
                 Button(action: {
                     viewModel.clearSearch()
                 }) {
                     Image(systemName: "trash")
                         .font(.title3)
-                        .foregroundColor(.red)
-                        .frame(width: 44, height: 44)
-                        .background(Color(.systemGray5))
-                        .cornerRadius(12)
                 }
+                .padding(10)
             }
+            .background(Color.accentColor)
+            .foregroundColor(.white)
+            .cornerRadius(12)
         }
         .padding(.bottom, 8)
     }
@@ -159,6 +175,9 @@ struct ProductScreen: View, CameraScannerViewDelegate {
                 ForEach(filterOptions, id: \.self) { filter in
                     Button(filter) {
                         viewModel.selectedFilterType = filter
+                        if !viewModel.searchQuery.isEmpty {
+                            viewModel.fetchProducts()
+                        }
                     }
                     .buttonStyle(FilterChipButtonStyle(isSelected: viewModel.selectedFilterType == filter))
                 }
@@ -197,19 +216,16 @@ struct ProductScreen: View, CameraScannerViewDelegate {
                     .padding(.top)
                 Spacer()
             }
-                } else if let errorMessage = viewModel.errorMessage {
-                    // Set showError to true to present the ErrorView
-                    // The ErrorView will handle its own dismissal after a timeout
-                    // or if the user taps retry.
-                    Color.clear.onAppear {
-                        showError = true
-                    }
-                } else if viewModel.products.isEmpty {
-                    EmptyStateView(systemImage: "magnifyingglass", message: "Busca productos por nombre, código o referencia.")
-                } else {
-                    productsListView
-                }
+        } else if let errorMessage = viewModel.errorMessage {
+            Color.clear.onAppear {
+                showError = true
             }
+        } else if viewModel.products.isEmpty {
+            EmptyStateView(systemImage: "magnifyingglass", message: "Busca productos por nombre, código o referencia.")
+        } else {
+            productsListView
+        }
+    }
             
             private var productsListView: some View {
         ScrollView {
@@ -293,16 +309,7 @@ struct ProductCardView: View {
                 }
             }
         }
-        .onChange(of: isHacerPedidosActive) { newValue in
-            if !newValue {
-                viewModel.clearSearch()
-            }
-        }
-        .onChange(of: isEtiquetaActive) { newValue in
-            if !newValue {
-                viewModel.clearSearch()
-            }
-        }
+
         .sheet(isPresented: $isShowingAddProductSheet) {
             AddProductToOrderView(product: product)
                 .environmentObject(cartManager)
@@ -325,9 +332,18 @@ struct ProductCardView: View {
                 
                 // Product Details
                 VStack(alignment: .leading, spacing: 4) { // Increased spacing a bit
-                    Text(product.desproducto ?? "Sin nombre")
-                        .font(.headline)
-                        .lineLimit(2)
+                    HStack {
+                        Text(product.desproducto ?? "Sin nombre")
+                            .font(.headline)
+                            .lineLimit(4)
+                        
+                        // SIMULATED ALERT ICON
+                        if (product.existencias ?? 0) < 25 {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.orange)
+                                .font(.caption)
+                        }
+                    }
                     
                     if let referencia = product.referencia, !referencia.isEmpty {
                         Text(referencia)
@@ -367,6 +383,7 @@ struct ProductCardView: View {
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .foregroundColor(.red)
+                        .minimumScaleFactor(0.5)
                     
                     Text("Precio Regular")
                         .font(.caption2)

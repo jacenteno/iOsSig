@@ -8,10 +8,11 @@ struct MainView: View {
     @State private var showAboutAlert = false
     @State private var showSyncView = false // Estado para la navegación de Sync
     @State private var refreshID = UUID() // New state variable for refreshing UI
+    @State private var selectedTab: String = "Inicio"
 
     // Estados para la navegación programática desde el menú
 
-    @State private var version: String = "1.0.231025-jcenteno" // Placeholder for app version
+    @State private var version: String = "1.0.0111-2025-jcenteno" // Placeholder for app version
     @State private var requestCode: String = "iOS CM" // Placeholder for request code
 
     // Define los items del TabView basados en los roles
@@ -39,16 +40,13 @@ struct MainView: View {
             items.append(TabItem(title: "CityPuntos", icon: "person.2.fill", view: AnyView(ClienteScreen())))
         }
         if role.hasPermission("VIEW_PRODUCTS") { // Assuming VIEW_PRODUCTS is sufficient for offline consultation
-            items.append(TabItem(title: "Consulta Offline", icon: "magnifyingglass", view: AnyView(OfflineProductsView())))
-        }
-        if settings.useOldApi && role.hasPermission("VIEW_DAVID") {
-          //  items.append(TabItem(title: "David", icon: "person.fill", view: AnyView(Text("Muy Pronto").font(.largeTitle))))
+            items.append(TabItem(title: "Consulta Offline", icon: "magnifyingglass", view: AnyView(OfflineProductsView(isPresented: .constant(true)))))
         }
         return items
     }
 
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             ForEach(tabItems) {
                 item in
                 NavigationView {
@@ -69,9 +67,11 @@ struct MainView: View {
                         Text(item.title)
                     }
                 }
+                .tag(item.title)
             }
         }
         .id(refreshID) // Apply refreshID to force re-render of TabView
+
         .sheet(isPresented: $showSettings, onDismiss: { // Add onDismiss action
             refreshID = UUID() // Change refreshID to force MainView to re-evaluate its body
         }) {
@@ -132,7 +132,7 @@ struct AppMenuView: View {
 
 // Estructura para definir un item del TabView
 struct TabItem: Identifiable {
-    let id = UUID()
+    var id: String { title }
     let title: String
     let icon: String
     let view: AnyView

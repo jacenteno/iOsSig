@@ -13,7 +13,6 @@ class ProductViewModel: ObservableObject {
     private var settings: SettingsManager
     private var cancellables = Set<AnyCancellable>()
     private var searchTask: Task<Void, Never>?
-    private var justSearchedByCode = false
 
     @Published var searchQuery: String = ""
     @Published var selectedFilterType: String = "Código"
@@ -30,34 +29,36 @@ class ProductViewModel: ObservableObject {
         setupBindings()
     }
 
+    deinit {
+        print("DEBUG: ProductViewModel is being deinitialized.")
+    }
+
     private func setupBindings() {
         $searchQuery
             .debounce(for: .milliseconds(500), scheduler: DispatchQueue.main)
             .removeDuplicates()
             .sink { [weak self] query in
-                guard let self = self, self.selectedFilterType != "Código" else { return }
-                if self.justSearchedByCode {
-                    self.justSearchedByCode = false
-                    return
-                }
+                print("ProductViewModel: searchQuery changed to: \(query)")
+                guard let self = self, self.selectedFilterType != "Código", !query.isEmpty else { return }
                 self.fetchProducts()
             }
             .store(in: &cancellables)
 
-        $selectedFilterType
-            .sink { [weak self] _ in
-                self?.fetchProducts()
-            }
-            .store(in: &cancellables)
+
     }
 
     func searchProductByCode() {
+        print("DEBUG: searchProductByCode() called. Query: \(searchQuery), Filter: \(selectedFilterType)")
         guard !searchQuery.isEmpty, selectedFilterType == "Código" else { return }
         fetchProducts()
     }
 
     func fetchProducts() {
         print("Fetching products...")
+        guard !searchQuery.isEmpty else {
+            products.removeAll()
+            return
+        }
         searchTask?.cancel()
         products.removeAll()
         productSource = nil
@@ -67,7 +68,7 @@ class ProductViewModel: ObservableObject {
     }
 
     func loadMoreProducts() {
-        print("Loading more products...")
+        print("DEBUG: loadMoreProducts() called. Can load more: \(canLoadMorePages)")
         guard canLoadMorePages else {
             print("Cannot load more pages. canLoadMorePages: \(canLoadMorePages)")
             return
@@ -92,8 +93,6 @@ class ProductViewModel: ObservableObject {
                     self.productSource = source
                     self.canLoadMorePages = false
                     self.isLoading = false
-                    self.searchQuery = ""
-                    self.justSearchedByCode = true
                     return
                 } else {
                     // TODO: Refactor list fetching to use the repository as well.
@@ -160,7 +159,6 @@ class ProductViewModel: ObservableObject {
         products = [product]
         selectedFilterType = "Código"
         
-        justSearchedByCode = true
         searchQuery = codproducto.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
