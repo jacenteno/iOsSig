@@ -58,6 +58,11 @@ struct DashboardScreen: View {
             }
             .navigationTitle("Dashboard")
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if viewModel.isLoading && !viewModel.ventaPorGrupoCaja.isEmpty {
+                        ProgressView()
+                    }
+                }
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Button(action: { 
                         // Capture and share
@@ -113,21 +118,9 @@ struct DashboardScreen: View {
             }
             .padding(.horizontal)
 
-            // Detalle por Área y Caja
-            Text("Detalle por Área y Caja")
-                .font(.title2)
+            // Detalle por Área y Caja - Replaced with Summary Table
+            CashRegisterSummaryTableView(summaryItems: viewModel.cashRegisterSummaryForChart)
                 .padding(.horizontal)
-
-            if viewModel.ventaPorGrupoCajaDetalle.isEmpty {
-                Text("No hay detalles de ventas por área disponibles.")
-                    .foregroundColor(.gray)
-                    .padding(.horizontal)
-            } else {
-                ForEach(viewModel.ventaPorGrupoCajaDetalle.values.sorted(by: { $0.nombre < $1.nombre })) { areaData in
-                    SalesAreaDetailCard(areaData: areaData)
-                        .padding(.horizontal)
-                }
-            }
             ChartCard(title: "Ventas por Hora") {
                 Chart(viewModel.salesByHourForChart) { item in
                     BarMark(
@@ -142,7 +135,7 @@ struct DashboardScreen: View {
 
             // New Chart: Ventas por Caja
             ChartCard(title: "Ventas por Caja") {
-                Chart(viewModel.allCashRegistersForChart.sorted(by: { $0.monto > $1.monto })) { register in
+                Chart(viewModel.cashRegisterSummaryForChart) { register in
                     BarMark(
                         x: .value("Monto", register.monto),
                         y: .value("Caja", register.nombre)
@@ -186,6 +179,63 @@ struct DashboardScreen: View {
         }
     }
 }
+
+// --- New Summary Table View ---
+struct CashRegisterSummaryTableView: View {
+    let summaryItems: [HomeViewModel.ChartableCashRegisterSummary]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Reporte de Ventas por Terminal")
+                .font(.title2)
+                .fontWeight(.bold)
+                .padding([.horizontal, .top])
+
+            // Header
+            HStack {
+                Text("# Caja").fontWeight(.bold).frame(maxWidth: .infinity, alignment: .leading)
+                Text("Trans.").fontWeight(.bold).frame(maxWidth: .infinity, alignment: .trailing)
+                Text("Monto").fontWeight(.bold).frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .font(.subheadline)
+            .foregroundColor(.secondary)
+            .padding(.horizontal)
+            
+            Divider().padding(.horizontal)
+
+            // Rows
+            if summaryItems.isEmpty {
+                Text("No hay datos de ventas por terminal.")
+                    .foregroundColor(.secondary)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(summaryItems) { item in
+                        HStack {
+                            Text(item.nombre)
+                                .font(.system(.subheadline, design: .monospaced))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Text("\(item.transacciones)")
+                                .font(.system(.subheadline, design: .monospaced))
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                            Text(String(format: "$%.2f", item.monto))
+                                .font(.system(.subheadline, design: .monospaced))
+                                .fontWeight(.semibold)
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                        }
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.bottom)
+            }
+        }
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+    }
+}
+
 
 // --- Helper Views --- 
 
