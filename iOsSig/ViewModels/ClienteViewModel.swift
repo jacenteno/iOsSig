@@ -60,6 +60,10 @@ class ClienteViewModel: ObservableObject {
                     self.error = "Error de decodificación: \(underlyingError.localizedDescription)"
                 case .clientNotFound:
                     self.error = "Cliente no existe en la base de datos."
+                case .productNotFound:
+                    self.error = "Producto no encontrado en la base de datos."
+                case .timeout:
+                    self.error = "La solicitud ha excedido el tiempo de espera. Por favor, inténtalo de nuevo."
                 }
             } else {
                 self.error = "Error: \(error.localizedDescription)"
@@ -104,6 +108,10 @@ class ClienteViewModel: ObservableObject {
                     self.error = "Error de decodificación: \(underlyingError.localizedDescription)"
                 case .clientNotFound:
                     self.error = "Cliente no existe en la base de datos."
+                case .productNotFound:
+                    self.error = "Producto no encontrado en la base de datos."
+                case .timeout:
+                    self.error = "La solicitud ha excedido el tiempo de espera. Por favor, inténtalo de nuevo."
                 }
             } else {
                 self.error = "Error al conectar con el servidor: \(error.localizedDescription)"

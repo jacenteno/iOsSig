@@ -7,6 +7,8 @@ enum APIError: Error, CustomStringConvertible, LocalizedError {
     case serverError(statusCode: Int)
     case decodingError(Error)
     case clientNotFound
+    case productNotFound
+    case timeout
 
     var errorDescription: String? {
         switch self {
@@ -20,6 +22,10 @@ enum APIError: Error, CustomStringConvertible, LocalizedError {
             return "Error al decodificar la respuesta del servidor: \(error.localizedDescription)"
         case .clientNotFound:
             return "Cliente no existe en la base de datos."
+        case .productNotFound:
+            return "Producto no encontrado en la base de datos."
+        case .timeout:
+            return "La solicitud ha excedido el tiempo de espera."
         }
     }
 
@@ -63,20 +69,13 @@ class APIService {
         guard let url = URL(string: "\(baseUrl)api/productos/por-codproducto/\(encodedCodigo)/") else {
             throw APIError.invalidURL
         }
-
-        let (data, response) = try await session.data(from: url)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.serverError(statusCode: -1) // Or some other default/indicator
-        }
-        guard httpResponse.statusCode == 200 else {
-            throw APIError.serverError(statusCode: httpResponse.statusCode)
-        }
+        
         do {
-            let product = try JSONDecoder().decode(Product.self, from: data)
-            return product
+            return try await performRequest(url: url, validStatusCodes: [200])
+        } catch APIError.serverError(let statusCode) where statusCode == 404 {
+            throw APIError.productNotFound
         } catch {
-            throw APIError.decodingError(error)
+            throw error
         }
     }
 
@@ -615,6 +614,61 @@ class APIService {
             return productoCreadoResponse
         } catch {
             throw APIError.decodingError(error)
+        }
+    }
+
+    private func performRequest<T: Decodable>(url: URL, validStatusCodes: [Int]) async throws -> T {
+        do {
+            let (data, response) = try await session.data(from: url)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw APIError.serverError(statusCode: -1)
+            }
+
+            if !validStatusCodes.contains(httpResponse.statusCode) {
+                throw APIError.serverError(statusCode: httpResponse.statusCode)
+            }
+
+            do {
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                return try decoder.decode(T.self, from: data)
+            } catch {
+                throw APIError.decodingError(error)
+            }
+        } catch let error as APIError {
+            throw error
+        } catch {
+            throw APIError.requestFailed(error)
+        }
+    }
+
+    private func performRequest<T: Decodable>(request: URLRequest, validStatusCodes: [Int]) async throws -> T {
+        do {
+            let (data, response) = try await session.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw APIError.serverError(statusCode: -1)
+            }
+
+            if !validStatusCodes.contains(httpResponse.statusCode) {
+                if let responseString = String(data: data, encoding: .utf8) {
+                    print("APIService Error Response: \(responseString)")
+                }
+                throw APIError.serverError(statusCode: httpResponse.statusCode)
+            }
+
+            do {
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                return try decoder.decode(T.self, from: data)
+            } catch {
+                throw APIError.decodingError(error)
+            }
+        } catch let error as APIError {
+            throw error
+        } catch {
+            throw APIError.requestFailed(error)
         }
     }
 

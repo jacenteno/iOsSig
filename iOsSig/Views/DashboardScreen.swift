@@ -7,7 +7,12 @@ struct DashboardScreen: View {
 
     @State private var refreshCountdown: Int = 45
     private let refreshInterval: Int = 45
-    @State private var showError: Bool = false // State to control ErrorView presentation
+    @State private var showError: Bool = false
+    
+    // State for Share functionality
+    @State private var capturedImage: UIImage?
+    @State private var isShowingShareSheet = false
+    @State private var contentHeight: CGFloat = .zero
 
     init() {}
 
@@ -35,120 +40,138 @@ struct DashboardScreen: View {
                     }
                 } else {
                     ScrollView {
-                                        VStack(alignment: .leading) {
-                                            // The header is now handled by the standard navigation bar.
-                
-                                            // Stats Grid
-                                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                                                StatCardImproved(title: "Transacciones", value: String(viewModel.totalTransacciones), icon: "arrow.left.arrow.right", iconColor: .customOrange)
-                                                StatCardImproved(title: "Total Tickets", value: String(viewModel.totalTickets), icon: "doc.text", iconColor: .customPrimary)
-                                                StatCardImproved(title: "Ingresos", value: String(format: "$%.2f", viewModel.totalMontoIngreso), icon: "arrow.up.right", iconColor: .customGreen)
-                                                StatCardImproved(title: "Egresos", value: String(format: "$%.2f", viewModel.totalMontoEgreso), icon: "arrow.down.left", iconColor: .customError)
-                                                StatCardImproved(title: "Descuentos", value: String(format: "$%.2f", viewModel.finalDescuento), icon: "tag.fill", iconColor: .customDeepPurple)
-                                                StatCardImproved(title: "N. Crédito", value: String(format: "$%.2f", viewModel.totalMontoNotaCredito), icon: "creditcard.fill", iconColor: .customTeal)
-                                            }
-                                            .padding(.horizontal)
-                
-                                            // Venta Final Card
-                                            CardView(title: "Venta Final Neta", value: String(format: "$%.2f", viewModel.totalMontoFinal), icon: "dollarsign.circle.fill", iconColor: .customPinkRed)
-                                                .padding(.horizontal)
-                
-                                            // Chart 1: Ventas por Área
-                                            ChartCard(title: "Ventas por Área") {
-                                                Chart(viewModel.salesByAreaForChart) { item in
-                                                    BarMark(
-                                                        x: .value("Ventas", item.monto),
-                                                        y: .value("Área", item.nombre.trimmingCharacters(in: .whitespaces))
-                                                    )
-                                                    .foregroundStyle(by: .value("Área", item.nombre.trimmingCharacters(in: .whitespaces)))
-                                                }
-                                                .chartYAxis {
-                                                    AxisMarks(position: .leading)
-                                                }
-                                                .chartLegend(.hidden)
-                                                .frame(height: 200)
-                                            }
-                                            .padding(.horizontal)
-                
-                                            // Detalle por Área y Caja
-                                            Text("Detalle por Área y Caja")
-                                                .font(.title2)
-                                                .padding(.horizontal)
-                
-                                            if viewModel.ventaPorGrupoCajaDetalle.isEmpty {
-                                                Text("No hay detalles de ventas por área disponibles.")
-                                                    .foregroundColor(.gray)
-                                                    .padding(.horizontal)
-                                            } else {
-                                                ForEach(viewModel.ventaPorGrupoCajaDetalle.values.sorted(by: { $0.nombre < $1.nombre })) { areaData in
-                                                    SalesAreaDetailCard(areaData: areaData)
-                                                        .padding(.horizontal)
-                                                }
-                                            }
-                                            ChartCard(title: "Ventas por Hora") {
-                                                Chart(viewModel.salesByHourForChart) { item in
-                                                    BarMark(
-                                                        x: .value("Hora", item.hour),
-                                                        y: .value("Ventas", item.amount)
-                                                    )
-                                                    .foregroundStyle(Color.customPrimary)
-                                                }
-                                                .frame(height: 250)
-                                            }
-                                            .padding(.horizontal)
-                
-                                            // New Chart: Ventas por Caja
-                                            ChartCard(title: "Ventas por Caja") {
-                                                Chart(viewModel.allCashRegistersForChart.sorted(by: { $0.monto > $1.monto })) { register in
-                                                    BarMark(
-                                                        x: .value("Monto", register.monto),
-                                                        y: .value("Caja", register.nombre)
-                                                    )
-                                                    .foregroundStyle(Color.customPrimary)
-                                                    .annotation(position: .trailing, alignment: .leading) {
-                                                        HStack {
-                                                            Text(String(format: "$%.2f", register.monto))
-                                                                .font(.system(size: 4))
-                                                                .foregroundColor(.primary)
-                                                            Text("(\(register.transacciones) Tr.)")
-                                                                .font(.system(size:4))
-                                                                .foregroundColor(.secondary)
-                                                        }
-                                                    }
-                                                }
-                                                .chartYAxis {
-                                                    AxisMarks(position: .leading)
-                                                }
-                                                .chartLegend(.hidden)
-                                                .frame(height: 250)
-                                            }
-                                            .padding(.horizontal)
-                                        }
-                                    }
-                                    .refreshable {
-                                        // Allow user to pull-to-refresh
-                                        viewModel.fetchSalesData()
-                                        self.refreshCountdown = self.refreshInterval
-                                    }
-                                }
-                            }
-                            .sheet(isPresented: $showError) {
-                                ErrorView(errorMessage: viewModel.error ?? "Error desconocido", retryAction: { viewModel.fetchSalesData() }, isShowingError: $showError)
-                            }
-                                        .navigationTitle("Dashboard")
-                                        .toolbar {
-                                            ToolbarItem(placement: .navigationBarTrailing) {
-                                                NavigationLink(destination: ProactiveAssistantView()) {
-                                                    Image(systemName: "exclamationmark.triangle.fill")
-                                                        .foregroundColor(.orange)
-                                                }
-                                            }
-                                        }
-                                    }                
+                        dashboardContent
+                    }
+                    .refreshable {
+                        viewModel.fetchSalesData()
+                        self.refreshCountdown = self.refreshInterval
+                    }
+                }
+            }
+            .sheet(isPresented: $showError) {
+                ErrorView(errorMessage: viewModel.error ?? "Error desconocido", retryAction: { viewModel.fetchSalesData() }, isShowingError: $showError)
+            }
+            .sheet(isPresented: $isShowingShareSheet) {
+                if let image = capturedImage {
+                    ShareSheet(activityItems: [image, "Informe de Dashboard - \(Date().formatted())"])
+                }
+            }
+            .navigationTitle("Dashboard")
+            .toolbar {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    Button(action: { 
+                        // Capture and share
+                        self.capturedImage = dashboardContent.asImage(size: CGSize(width: UIScreen.main.bounds.width, height: contentHeight))
+                        self.isShowingShareSheet = true
+                    }) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    
+                    NavigationLink(destination: ProactiveAssistantView()) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                    }
+                }
+            }
+        }
         .onAppear {
-            // The ViewModel now handles its own initial fetch
             setupRefreshTimer()
         }
+    }
+    
+    private var dashboardContent: some View {
+        VStack(alignment: .leading) {
+            // Stats Grid
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                StatCardImproved(title: "Transacciones", value: String(viewModel.totalTransacciones), icon: "arrow.left.arrow.right", iconColor: .customOrange)
+                StatCardImproved(title: "Total Tickets", value: String(viewModel.totalTickets), icon: "doc.text", iconColor: .customPrimary)
+                StatCardImproved(title: "Ingresos", value: String(format: "$%.2f", viewModel.totalMontoIngreso), icon: "arrow.up.right", iconColor: .customGreen)
+                StatCardImproved(title: "Egresos", value: String(format: "$%.2f", viewModel.totalMontoEgreso), icon: "arrow.down.left", iconColor: .customError)
+                StatCardImproved(title: "Descuentos", value: String(format: "$%.2f", viewModel.finalDescuento), icon: "tag.fill", iconColor: .customDeepPurple)
+                StatCardImproved(title: "N. Crédito", value: String(format: "$%.2f", viewModel.totalMontoNotaCredito), icon: "creditcard.fill", iconColor: .customTeal)
+            }
+            .padding(.horizontal)
+
+            // Venta Final Card
+            CardView(title: "Venta Final Neta", value: String(format: "$%.2f", viewModel.totalMontoFinal), icon: "dollarsign.circle.fill", iconColor: .customPinkRed)
+                .padding(.horizontal)
+
+            // Chart 1: Ventas por Área
+            ChartCard(title: "Ventas por Área") {
+                Chart(viewModel.salesByAreaForChart) { item in
+                    BarMark(
+                        x: .value("Ventas", item.monto),
+                        y: .value("Área", item.nombre.trimmingCharacters(in: .whitespaces))
+                    )
+                    .foregroundStyle(by: .value("Área", item.nombre.trimmingCharacters(in: .whitespaces)))
+                }
+                .chartYAxis {
+                    AxisMarks(position: .leading)
+                }
+                .chartLegend(.hidden)
+                .frame(height: 200)
+            }
+            .padding(.horizontal)
+
+            // Detalle por Área y Caja
+            Text("Detalle por Área y Caja")
+                .font(.title2)
+                .padding(.horizontal)
+
+            if viewModel.ventaPorGrupoCajaDetalle.isEmpty {
+                Text("No hay detalles de ventas por área disponibles.")
+                    .foregroundColor(.gray)
+                    .padding(.horizontal)
+            } else {
+                ForEach(viewModel.ventaPorGrupoCajaDetalle.values.sorted(by: { $0.nombre < $1.nombre })) { areaData in
+                    SalesAreaDetailCard(areaData: areaData)
+                        .padding(.horizontal)
+                }
+            }
+            ChartCard(title: "Ventas por Hora") {
+                Chart(viewModel.salesByHourForChart) { item in
+                    BarMark(
+                        x: .value("Hora", item.hour),
+                        y: .value("Ventas", item.amount)
+                    )
+                    .foregroundStyle(Color.customPrimary)
+                }
+                .frame(height: 250)
+            }
+            .padding(.horizontal)
+
+            // New Chart: Ventas por Caja
+            ChartCard(title: "Ventas por Caja") {
+                Chart(viewModel.allCashRegistersForChart.sorted(by: { $0.monto > $1.monto })) { register in
+                    BarMark(
+                        x: .value("Monto", register.monto),
+                        y: .value("Caja", register.nombre)
+                    )
+                    .foregroundStyle(Color.customPrimary)
+                    .annotation(position: .trailing, alignment: .leading) {
+                        HStack {
+                            Text(String(format: "$%.2f", register.monto))
+                                .font(.system(size: 4))
+                                .foregroundColor(.primary)
+                            Text("(\(register.transacciones) Tr.)")
+                                .font(.system(size:4))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(position: .leading)
+                }
+                .chartLegend(.hidden)
+                .frame(height: 250)
+            }
+            .padding(.horizontal)
+        }
+        .background(
+            GeometryReader { proxy in
+                Color.clear.onAppear { self.contentHeight = proxy.size.height }
+            }
+        )
     }
 
     private func setupRefreshTimer() {

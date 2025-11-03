@@ -6,6 +6,7 @@ class HacerPedidosViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var showAlert = false
     @Published var alertMessage = ""
+    @Published var isSuccess = false
     @Published var operatorDetail: Operator?
 
     private let apiService = APIService()
@@ -63,10 +64,11 @@ class HacerPedidosViewModel: ObservableObject {
         do {
             let createdOrder = try await apiService.createRequestOrder(orderRequest: orderRequest)
             alertMessage = "Pedido #\(createdOrder.id) creado exitosamente."
+            isSuccess = true
             showAlert = true
-            cartManager.clearCart()
         } catch {
             alertMessage = "Error al crear el pedido: \(error.localizedDescription)"
+            isSuccess = false
             showAlert = true
         }
 

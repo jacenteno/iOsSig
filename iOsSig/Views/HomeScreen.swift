@@ -66,14 +66,7 @@ struct HomeScreen: View {
             .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
             .navigationTitle("Resumen de Ventas de hoy")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Image("sig")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(height: 50)
-                }
-            }
+
             .refreshable {
                 viewModel.fetchSalesData()
             }
