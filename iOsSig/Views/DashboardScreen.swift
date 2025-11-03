@@ -192,13 +192,7 @@ struct DashboardScreen: View {
     }
 }
 
-struct DashboardScreen_Previews: PreviewProvider {
-    static var previews: some View {
-        DashboardScreen()
-            .environmentObject(SettingsManager.shared)
-    }
-}
-
+// --- Helper Views ---
 
 struct StatCardImproved: View {
     let title: String
@@ -235,7 +229,7 @@ struct CardView: View {
             }
         }
         .padding()
-        .background(Color.white)
+        .background(Color(.systemBackground))
         .cornerRadius(16)
         .shadow(radius: 2)
     }
@@ -259,7 +253,7 @@ struct ChartCard<Content: View>: View {
             content()
         }
         .padding()
-        .background(Color.white)
+        .background(Color(.systemBackground))
         .cornerRadius(16)
         .shadow(radius: 2)
     }
@@ -270,34 +264,39 @@ struct SalesAreaDetailCard: View {
     @State private var expanded: Bool = false
 
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 0) {
             HStack {
+                Image(systemName: "building.2.fill")
+                    .font(.title3)
+                    .foregroundColor(.customPrimary)
                 VStack(alignment: .leading) {
-                    Text(areaData.nombre)
+                    Text(areaData.nombre.trimmingCharacters(in: .whitespacesAndNewlines))
                         .font(.headline)
                         .fontWeight(.semibold)
-                        .foregroundColor(.red)
+                        .foregroundColor(.primary)
                     Text("Total: $\(areaData.totalMonto, specifier: "%.2f") (\(areaData.totalTransacciones) Tr.)")
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
                 }
                 Spacer()
-                Image(systemName: expanded ? "chevron.up" : "chevron.down")
+                Image(systemName: expanded ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
                     .foregroundColor(.gray)
+                    .font(.title3)
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, 12)
+            .padding(.horizontal)
             .contentShape(Rectangle()) // Make entire row tappable
             .onTapGesture {
                 withAnimation { expanded.toggle() }
             }
 
             if expanded {
-                Divider()
-                VStack(alignment: .leading) {
+                Divider().padding(.horizontal)
+                VStack(alignment: .leading, spacing: 8) {
                     if areaData.cajas.isEmpty {
                         Text("No hay cajas registradoras en esta área.")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                             .padding(.top, 8)
                     } else {
                         ForEach(areaData.cajas.values.sorted(by: { $0.nombre < $1.nombre })) { registerDetail in
@@ -305,13 +304,14 @@ struct SalesAreaDetailCard: View {
                         }
                     }
                 }
-                .padding(.top, 4)
+                .padding(.horizontal)
+                .padding(.top, 8)
+                .padding(.bottom, 12)
             }
         }
-        .padding()
-        .background(Color.white)
+        .background(Color(.systemBackground))
         .cornerRadius(16)
-        .shadow(radius: 2)
+        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
 }
 
@@ -319,18 +319,21 @@ struct CashRegisterRow: View {
     let registerDetail: CashRegisterDetail
 
     var body: some View {
-        HStack {
-            Text(registerDetail.nombre)
+        HStack(spacing: 10) {
+            Image(systemName: "point.3.connected.trianglepath.fill")
+                .font(.caption)
+                .foregroundColor(.customTeal)
+            Text(registerDetail.nombre.trimmingCharacters(in: .whitespacesAndNewlines))
                 .font(.subheadline)
-                .foregroundColor(.gray)
+                .foregroundColor(.primary)
             Spacer()
             Text("\(registerDetail.transacciones) Tr.")
                 .font(.subheadline)
-                .foregroundColor(.gray)
-            Text("$\(registerDetail.monto, specifier: "%.2f")")
+                .foregroundColor(.secondary)
+            Text(String(format: "$%.2f", registerDetail.monto))
                 .font(.subheadline)
                 .fontWeight(.semibold)
-                .foregroundColor(.black)
+                .foregroundColor(.customGreen)
         }
         .padding(.vertical, 4)
     }
