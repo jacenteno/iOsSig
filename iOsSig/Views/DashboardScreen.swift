@@ -185,49 +185,74 @@ struct CashRegisterSummaryTableView: View {
     let summaryItems: [HomeViewModel.ChartableCashRegisterSummary]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Reporte de Ventas por Terminal")
-                .font(.title2)
-                .fontWeight(.bold)
-                .padding([.horizontal, .top])
-
-            // Header
-            HStack {
-                Text("# Caja").fontWeight(.bold).frame(maxWidth: .infinity, alignment: .leading)
-                Text("Trans.").fontWeight(.bold).frame(maxWidth: .infinity, alignment: .trailing)
-                Text("Monto").fontWeight(.bold).frame(maxWidth: .infinity, alignment: .trailing)
+        VStack(alignment: .leading, spacing: 0) {
+            // Card Header
+            HStack(spacing: 12) {
+                Image(systemName: "desktopcomputer")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.accentColor)
+                Text("Reporte de Ventas por Terminal")
+                    .font(.title2)
+                    .fontWeight(.bold)
             }
-            .font(.subheadline)
+            .padding([.horizontal, .top])
+            .padding(.bottom, 8)
+
+            // Column Headers
+            HStack {
+                Text("CAJA")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text("TRANS.")
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                Text("MONTO")
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .font(.caption)
             .foregroundColor(.secondary)
             .padding(.horizontal)
-            
-            Divider().padding(.horizontal)
+            .padding(.bottom, 5)
+
+            Divider()
 
             // Rows
             if summaryItems.isEmpty {
-                Text("No hay datos de ventas por terminal.")
-                    .foregroundColor(.secondary)
-                    .padding()
-                    .frame(maxWidth: .infinity)
+                HStack {
+                    Spacer()
+                    Text("No hay datos de ventas por terminal.")
+                        .foregroundColor(.secondary)
+                        .padding()
+                    Spacer()
+                }
             } else {
-                VStack(spacing: 12) {
+                VStack(spacing: 0) {
                     ForEach(summaryItems) { item in
-                        HStack {
-                            Text(item.nombre)
-                                .font(.system(.subheadline, design: .monospaced))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            Text("\(item.transacciones)")
-                                .font(.system(.subheadline, design: .monospaced))
-                                .frame(maxWidth: .infinity, alignment: .trailing)
-                            Text(String(format: "$%.2f", item.monto))
-                                .font(.system(.subheadline, design: .monospaced))
-                                .fontWeight(.semibold)
-                                .frame(maxWidth: .infinity, alignment: .trailing)
+                        VStack(spacing: 0) {
+                            HStack {
+                                Text(item.nombre)
+                                    .font(.system(.body, design: .monospaced))
+                                    .fontWeight(.medium)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                
+                                Text("\(item.transacciones)")
+                                    .font(.system(.body, design: .monospaced))
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                
+                                Text(String(format: "$%.2f", item.monto))
+                                    .font(.system(.body, design: .monospaced))
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.accentColor)
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                            }
+                            .padding(.vertical, 12)
+                            .padding(.horizontal)
+
+                            if item.id != summaryItems.last?.id {
+                                Divider()
+                            }
                         }
                     }
                 }
-                .padding(.horizontal)
-                .padding(.bottom)
             }
         }
         .background(Color(.systemBackground))
