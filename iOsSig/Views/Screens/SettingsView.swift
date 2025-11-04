@@ -422,7 +422,7 @@ struct SettingsView: View {
     private var settingsForm: some View {
 
         Form {
-            Section(header: Text("Apariencia")) {
+            Section(header: Text("Apariencia").sectionHeader()) {
                 Picker("Esquema de Color", selection: Binding($tempSettings)!.appColorScheme) {
                     ForEach(SettingsManager.AppColorScheme.allCases) {
                         Text($0.rawValue).tag($0)
@@ -430,10 +430,29 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.segmented)
 
-                ColorPicker("Color de Acento", selection: Binding($tempSettings)!.accentColor)
+                ColorPicker("Color de Acento Personalizado", selection: Binding($tempSettings)!.accentColor)
+
+                let predefinedColors: [Color] = [.red, .green, .blue, .orange, .purple, .pink]
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 16) {
+                        ForEach(predefinedColors, id: \.self) { color in
+                            Circle()
+                                .fill(color)
+                                .frame(width: 30, height: 30)
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.primary.opacity(0.2), lineWidth: 1)
+                                )
+                                .onTapGesture {
+                                    tempSettings?.accentColor = color
+                                }
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
             }
 
-            Section(header: Text("Configuración de APIs")) {
+            Section(header: Text("Configuración de APIs").sectionHeader()) {
 
                 Label {
 
@@ -533,7 +552,7 @@ struct SettingsView: View {
 
             
 
-            Section(header: Text("Configuración de Tienda")) {
+            Section(header: Text("Configuración de Tienda").sectionHeader()) {
 
                 Label {
 
@@ -617,7 +636,7 @@ struct SettingsView: View {
 
             
 
-            Section(header: Text("Configuración de Impresora")) {
+            Section(header: Text("Configuración de Impresora").sectionHeader()) {
 
                 Picker(selection: Binding($tempSettings)!.printerConnectionType) {
 
@@ -691,7 +710,7 @@ struct SettingsView: View {
 
             
 
-            Section(header: Text("Rol del Dispositivo")) {
+            Section(header: Text("Rol del Dispositivo").sectionHeader()) {
 
                 Picker(selection: Binding($tempSettings)!.userRole) {
 
