@@ -1,6 +1,7 @@
 
 import Foundation
 import Combine
+import SwiftUI // Import SwiftUI for Color
 
 // Gestiona el guardado y la carga de configuraciones usando UserDefaults.
 // Es un ObservableObject para que la UI pueda reaccionar a sus cambios.
@@ -8,6 +9,15 @@ class SettingsManager: ObservableObject {
     static let shared = SettingsManager() // Singleton para acceso global
 
     private let defaults = UserDefaults.standard
+
+    // Enum para el esquema de color de la aplicación
+    enum AppColorScheme: String, CaseIterable, Identifiable {
+        case system = "Sistema"
+        case light = "Claro"
+        case dark = "Oscuro"
+
+        var id: String { self.rawValue }
+    }
 
     // Claves para UserDefaults
     private enum Keys {
@@ -32,6 +42,10 @@ class SettingsManager: ObservableObject {
         static let printerPort = "printerPort"
         static let printerMacAddress = "printerMacAddress"
         static let isActivated = "isActivated"
+
+        // Nuevas claves para la apariencia
+        static let appColorScheme = "appColorScheme"
+        static let accentColor = "accentColor"
     }
 
     // @Published notifica a la UI de SwiftUI cuando un valor cambia
@@ -103,6 +117,23 @@ class SettingsManager: ObservableObject {
         didSet { defaults.set(printerMacAddress, forKey: Keys.printerMacAddress) }
     }
 
+    // Propiedades de apariencia
+    @Published var appColorScheme: AppColorScheme {
+        didSet {
+            defaults.set(appColorScheme.rawValue, forKey: Keys.appColorScheme)
+            // Notificar a la UI para que se actualice
+            NotificationCenter.default.post(name: .didChangeColorScheme, object: nil)
+        }
+    }
+
+    @Published var accentColor: String {
+        didSet {
+            defaults.set(accentColor, forKey: Keys.accentColor)
+            // Notificar a la UI para que se actualice
+            NotificationCenter.default.post(name: .didChangeAccentColor, object: nil)
+        }
+    }
+
     private init() {
         // Cargar valores guardados o usar valores por defecto
         self.productApiUrl = defaults.string(forKey: Keys.productApiUrl) ?? "http://192.168.1.13:8000/"
@@ -127,6 +158,10 @@ class SettingsManager: ObservableObject {
         self.printerIpAddress = defaults.string(forKey: Keys.printerIpAddress) ?? "192.168.1.100"
         self.printerPort = defaults.string(forKey: Keys.printerPort) ?? "9100"
         self.printerMacAddress = defaults.string(forKey: Keys.printerMacAddress) ?? "00:11:22:33:44:55"
+
+        // Cargar propiedades de apariencia o usar valores por defecto
+        self.appColorScheme = AppColorScheme(rawValue: defaults.string(forKey: Keys.appColorScheme) ?? AppColorScheme.system.rawValue) ?? .system
+        self.accentColor = defaults.string(forKey: Keys.accentColor) ?? Color.customPrimary.toHex() ?? "#FF0000" // Default to red if conversion fails
     }
     
     // Función para reiniciar la app (simulado)
@@ -135,5 +170,56 @@ class SettingsManager: ObservableObject {
         // Esto es un truco común: cambia una propiedad raíz para forzar a SwiftUI a redibujar.
         // Por ejemplo, podrías cambiar el ID de la vista principal en SigMpApp.swift
         print("Configuración guardada. La app se actualizará.")
+    }
+}
+
+extension Notification.Name {
+    static let didChangeColorScheme = Notification.Name("didChangeColorScheme")
+    static let didChangeAccentColor = Notification.Name("didChangeAccentColor")
+}
+
+extension Color {
+    func toHex() -> String? {
+        let uic = UIColor(self)
+        guard let components = uic.cgColor.components, components.count >= 3 else { return nil }
+        let r = Float(components[0])
+        let g = Float(components[1])
+        let b = Float(components[2])
+        var a = Float(1.0)
+
+        if components.count >= 4 {
+            a = Float(components[3])
+        }
+
+        if a != Float(1.0) {
+            return String(format: "#%02lX%02lX%02lX%02lX", lroundf(r * 255), lroundf(g * 255), lroundf(b * 255), lroundf(a * 255))
+        } else {
+            return String(format: "#%02lX%02lX%02lX", lroundf(r * 255), lroundf(g * 255), lroundf(b * 255))
+        }
+    }
+
+    init?(hex: String) {
+        let r, g, b, a: CGFloat
+
+        let start = hex.hasPrefix("#") ? hex.index(hex.startIndex, offsetBy: 1) : hex.startIndex
+        var hexColor = String(hex[start...])
+
+        if hexColor.count == 6 {
+            hexColor.append("FF") // Add alpha component for RGB
+        }
+
+        guard hexColor.count == 8 else { return nil }
+
+        let scanner = Scanner(string: hexColor)
+        var hexNumber: UInt64 = 0
+
+        guard scanner.scanHexInt64(&hexNumber) else { return nil }
+
+        r = CGFloat((hexNumber & 0xff000000) >> 24) / 255
+        g = CGFloat((hexNumber & 0x00ff0000) >> 16) / 255
+        b = CGFloat((hexNumber & 0x0000ff00) >> 8) / 255
+        a = CGFloat(hexNumber & 0x000000ff) / 255
+
+        self.init(red: r, green: g, blue: b, opacity: a)
     }
 }

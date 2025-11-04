@@ -33,45 +33,227 @@ struct SettingsView: View {
 
 
 
-    var body: some View {
+        var body: some View {
 
-        NavigationView {
 
-            VStack {
 
-              ///  if !isMasterAuthenticated {
+            ZStack(alignment: .bottomTrailing) {
 
-                //    authenticationView
 
-               // } else {
 
-                    if let _ = tempSettings {
+                NavigationView {
 
-                        settingsForm
 
-                    } else {
 
-                        ProgressView()
+                    VStack {
 
-                            .onAppear(perform: loadSettings)
+
+
+                        if let _ = tempSettings {
+
+
+
+                            settingsForm
+
+
+
+                        } else {
+
+
+
+                            ProgressView()
+
+
+
+                                .onAppear(perform: loadSettings)
+
+
+
+                        }
+
+
 
                     }
 
+
+
+                    .navigationTitle("Configuración")
+
+
+
+                    .navigationBarItems(leading: Button("Cerrar") {
+
+
+
+                        presentationMode.wrappedValue.dismiss()
+
+
+
+                    })
+
+
+
                 }
 
-         //   }
 
-            .navigationTitle("Configuración")
 
-            .navigationBarItems(leading: Button("Cerrar") {
+    
 
-                presentationMode.wrappedValue.dismiss()
 
-            })
+
+                // Floating Save Button
+
+
+
+                Button(action: {
+
+
+
+                    if let temp = tempSettings {
+
+
+
+                        settings.productApiUrl = temp.productApiUrl
+
+
+
+                        settings.clientApiUrl = temp.clientApiUrl
+
+
+
+                        settings.citymallApiUrl = temp.citymallApiUrl
+
+
+
+                        settings.citymallFronteraApiUrl = temp.citymallFronteraApiUrl
+
+
+
+                        settings.useOldApi = temp.useOldApi
+
+
+
+                        settings.desplegarVentasApiOld = temp.desplegarVentasApiOld
+
+
+
+                        settings.desplegarComprasApiOld = temp.desplegarComprasApiOld
+
+
+
+                        settings.companyCode = temp.companyCode
+
+
+
+                        settings.companyName = temp.companyName
+
+
+
+                        settings.warehouseCode = temp.warehouseCode
+
+
+
+                        settings.precioCode = temp.precioCode
+
+
+
+                        settings.operadorCode = temp.operadorCode
+
+
+
+                        settings.userRole = temp.userRole
+
+
+
+                        settings.printerConnectionType = temp.printerConnectionType
+
+
+
+                        settings.printerIpAddress = temp.printerIpAddress
+
+
+
+                        settings.printerPort = temp.printerPort
+
+
+
+                        settings.printerMacAddress = temp.printerMacAddress
+
+
+
+                        settings.appColorScheme = temp.appColorScheme
+
+
+
+                        settings.accentColor = temp.accentColor.toHex() ?? "#FF0000"
+
+
+
+                    }
+
+
+
+                    settings.restartApp()
+
+
+
+                    presentationMode.wrappedValue.dismiss()
+
+
+
+                }) {
+
+
+
+                    Label("Guardar", systemImage: "checkmark.circle.fill")
+
+
+
+                        .font(.headline)
+
+
+
+                        .padding(.vertical, 12)
+
+
+
+                        .padding(.horizontal, 20)
+
+
+
+                        .background(Color.accentColor)
+
+
+
+                        .foregroundColor(.white)
+
+
+
+                        .cornerRadius(30)
+
+
+
+                        .shadow(radius: 10)
+
+
+
+                }
+
+
+
+                .padding(.trailing, 20)
+
+
+
+                .padding(.bottom, 20)
+
+
+
+            }
+
+
 
         }
-
-    }
 
 
 
@@ -111,7 +293,11 @@ struct SettingsView: View {
 
             printerPort: settings.printerPort,
 
-            printerMacAddress: settings.printerMacAddress
+            printerMacAddress: settings.printerMacAddress,
+
+            appColorScheme: settings.appColorScheme,
+
+            accentColor: Color(hex: settings.accentColor) ?? .accentColor
 
         )
 
@@ -236,6 +422,16 @@ struct SettingsView: View {
     private var settingsForm: some View {
 
         Form {
+            Section(header: Text("Apariencia")) {
+                Picker("Esquema de Color", selection: Binding($tempSettings)!.appColorScheme) {
+                    ForEach(SettingsManager.AppColorScheme.allCases) {
+                        Text($0.rawValue).tag($0)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                ColorPicker("Color de Acento", selection: Binding($tempSettings)!.accentColor)
+            }
 
             Section(header: Text("Configuración de APIs")) {
 
@@ -515,72 +711,6 @@ struct SettingsView: View {
 
 
 
-            Section {
-
-                Button(action: {
-
-                    if let temp = tempSettings {
-
-                        settings.productApiUrl = temp.productApiUrl
-
-                        settings.clientApiUrl = temp.clientApiUrl
-
-                        settings.citymallApiUrl = temp.citymallApiUrl
-
-                        settings.citymallFronteraApiUrl = temp.citymallFronteraApiUrl
-
-                        settings.useOldApi = temp.useOldApi
-
-                        settings.desplegarVentasApiOld = temp.desplegarVentasApiOld
-
-                        settings.desplegarComprasApiOld = temp.desplegarComprasApiOld
-
-                        settings.companyCode = temp.companyCode
-
-                        settings.companyName = temp.companyName
-
-                        settings.warehouseCode = temp.warehouseCode
-
-                        settings.precioCode = temp.precioCode
-
-                        settings.operadorCode = temp.operadorCode
-
-                        settings.userRole = temp.userRole
-
-                        settings.printerConnectionType = temp.printerConnectionType
-
-                        settings.printerIpAddress = temp.printerIpAddress
-
-                        settings.printerPort = temp.printerPort
-
-                        settings.printerMacAddress = temp.printerMacAddress
-
-                    }
-
-                    settings.restartApp()
-
-                    presentationMode.wrappedValue.dismiss()
-
-                }) {
-
-                    HStack {
-
-                        Spacer()
-
-                        Text("Guardar")
-
-                            .fontWeight(.semibold)
-
-                        Spacer()
-
-                    }
-
-                }
-
-                .tint(.accentColor)
-
-            }
-
         }
 
     }
@@ -626,6 +756,10 @@ struct TempSettings {
     var printerPort: String
 
     var printerMacAddress: String
+
+    var appColorScheme: SettingsManager.AppColorScheme
+
+    var accentColor: Color
 
 }
 

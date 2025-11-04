@@ -17,7 +17,20 @@ struct iOsSigApp: App {
                 ContentView()
                     .environmentObject(settings)
                     .environmentObject(cartManager)
+                    .preferredColorScheme(colorScheme)
+                    .accentColor(Color(hex: settings.accentColor) ?? .accentColor)
            // }
+        }
+    }
+
+    private var colorScheme: ColorScheme? {
+        switch settings.appColorScheme {
+        case .system:
+            return nil
+        case .light:
+            return .light
+        case .dark:
+            return .dark
         }
     }
 }
