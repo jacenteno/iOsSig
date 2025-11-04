@@ -21,8 +21,7 @@ struct DashboardScreen: View {
     init() {}
 
     var body: some View {
-        NavigationView {
-            ZStack {
+        ZStack {
                 // Modern gradient background
                 LinearGradient(
                     gradient: Gradient(colors: [
@@ -110,7 +109,6 @@ struct DashboardScreen: View {
                 }
             }
 
-        }
         .onAppear {
             viewModel.fetchSalesData()
             setupRefreshTimer()
@@ -213,6 +211,24 @@ struct DashboardScreen: View {
     private var statsGrid: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
             ModernStatCard(
+                title: "Tickets",
+                value: viewModel.totalTickets == 0 ? "No Ticket Realizado" : "\(viewModel.totalTickets)",
+                icon: "doc.text.fill",
+                iconColor: .customPinkRed,
+                gradientColors: [Color.customPinkRed.opacity(0.1), Color.customPinkRed.opacity(0.05)]
+            )
+            .transition(.scale.combined(with: .opacity))
+            
+            ModernStatCard(
+                title: "Clientes",
+                value: "\(viewModel.totalClientes)",
+                icon: "person.2.fill",
+                iconColor: .customOrange,
+                gradientColors: [Color.customOrange.opacity(0.1), Color.customOrange.opacity(0.05)]
+            )
+            .transition(.scale.combined(with: .opacity))
+
+            ModernStatCard(
                 title: "Ingresos",
                 value: String(format: "$%.2f", viewModel.totalMontoIngreso),
                 icon: "arrow.up.right",
@@ -245,6 +261,24 @@ struct DashboardScreen: View {
                 icon: "creditcard.fill",
                 iconColor: .customTeal,
                 gradientColors: [Color.customTeal.opacity(0.1), Color.customTeal.opacity(0.05)]
+            )
+            .transition(.scale.combined(with: .opacity))
+            
+            ModernStatCard(
+                title: "Total Factura Mes",
+                value: String(format: "$%.2f", viewModel.totalFacturaDelMes),
+                icon: "calendar",
+                iconColor: .blue,
+                gradientColors: [Color.blue.opacity(0.1), Color.blue.opacity(0.05)]
+            )
+            .transition(.scale.combined(with: .opacity))
+            
+            ModernStatCard(
+                title: "Trans. Caja Grupo",
+                value: "\(viewModel.totalTransaccionCajaGrupo)",
+                icon: "person.3.fill",
+                iconColor: .purple,
+                gradientColors: [Color.purple.opacity(0.1), Color.purple.opacity(0.05)]
             )
             .transition(.scale.combined(with: .opacity))
         }
