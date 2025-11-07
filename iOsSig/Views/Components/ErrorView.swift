@@ -47,8 +47,8 @@ struct ErrorView: View {
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.orange)
-                        .foregroundColor(.white)
+                        .background(Color.accentColor.opacity(0.1))
+                        .foregroundColor(.accentColor)
                         .cornerRadius(12)
                 }
             }

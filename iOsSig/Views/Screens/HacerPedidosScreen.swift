@@ -14,7 +14,7 @@ struct HacerPedidosScreen: View {
         ZStack {
             // 1. Background Gradient
             LinearGradient(
-                colors: [Color(.systemBackground), Color.blue.opacity(0.03)],
+                colors: [Color(.systemBackground), Color.accentColor.opacity(0.03)],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -168,7 +168,7 @@ struct HacerPedidosScreen: View {
             )
             .cornerRadius(16)
             .shadow(
-                color: (viewModel.isLoading || isEditing) ? .clear : .blue.opacity(0.4),
+                color: (viewModel.isLoading || isEditing) ? .clear : .accentColor.opacity(0.4),
                 radius: 10, x: 0, y: 5
             )
         }

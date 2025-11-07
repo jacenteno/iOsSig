@@ -242,6 +242,7 @@ class APIService {
         }
     }
 
+
     func createArticulo(articulo: Articulo) async throws -> Articulo {
         let baseUrl = settings.productApiUrl // Assuming productApiUrl is the base for product creation
         guard let url = URL(string: "\(baseUrl)api/creaproductos/") else {
@@ -416,23 +417,48 @@ class APIService {
         }
     }
 
-    func fetchAllRequests() async throws -> [RequestOrderResponse] {
+    func fetchAllRequests(statuses: [String]? = nil, createdAfter: Date? = nil) async throws -> [RequestOrderResponse] {
         let baseUrl = settings.productApiUrl
-        guard let url = URL(string: "\(baseUrl)api/warehouse/requests/") else {
+        guard var components = URLComponents(string: "\(baseUrl)api/warehouse/requests/") else {
+            throw APIError.invalidURL
+        }
+
+        var queryItems = [URLQueryItem]()
+
+        // Add status query items
+        if let statuses = statuses {
+            for status in statuses {
+                queryItems.append(URLQueryItem(name: "status", value: status))
+            }
+        }
+
+        // Add date query item
+        if let createdAfter = createdAfter {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            let dateString = formatter.string(from: createdAfter)
+            queryItems.append(URLQueryItem(name: "created_after", value: dateString))
+        }
+
+        if !queryItems.isEmpty {
+            components.queryItems = queryItems
+        }
+
+        guard let url = components.url else {
             throw APIError.invalidURL
         }
 
         let (data, response) = try await session.data(from: url)
 
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.serverError(statusCode: -1)
-        }
-        guard httpResponse.statusCode == 200 else {
-            throw APIError.serverError(statusCode: httpResponse.statusCode)
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+            throw APIError.serverError(statusCode: statusCode)
         }
 
         do {
             let decoder = JSONDecoder()
+            // Assuming the response is a paginated one, but the old function returned just the results.
+            // Let's adjust to decode the paginated response and return the results array.
             let paginatedResponse = try decoder.decode(PaginatedOrderResponse.self, from: data)
             return paginatedResponse.results
         } catch {
@@ -532,24 +558,46 @@ class APIService {
 
     func getOperatorById(operatorId: Int) async throws -> Operator {
         let baseUrl = settings.productApiUrl // Assuming productApiUrl is the base for warehouse
-        guard let url = URL(string: "\(baseUrl)api/warehouse/operators/\(operatorId)/") else {
+        
+        // Fetch all operators from the list endpoint
+        guard let url = URL(string: "\(baseUrl)api/warehouse/operators/") else {
             throw APIError.invalidURL
         }
 
         let (data, response) = try await session.data(from: url)
 
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.serverError(statusCode: -1)
+        // --- START OF INVESTIGATIVE LOGGING ---
+        if let jsonString = String(data: data, encoding: .utf8) {
+            print("--- RAW JSON RESPONSE for /api/warehouse/operators/ ---")
+            print(jsonString)
+            print("----------------------------------------------------")
         }
-        guard httpResponse.statusCode == 200 else {
-            throw APIError.serverError(statusCode: httpResponse.statusCode)
+        // --- END OF INVESTIGATIVE LOGGING ---
+
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+            if statusCode == 404 {
+                print("APIService: The operator list endpoint (/api/warehouse/operators/) was not found.")
+            }
+            throw APIError.serverError(statusCode: statusCode)
         }
 
         do {
             let decoder = JSONDecoder()
-            let operatorResponse = try decoder.decode(Operator.self, from: data)
-            return operatorResponse
+            
+            // Decode the paginated response object
+            let paginatedResponse = try decoder.decode(PaginatedOperatorResponse.self, from: data)
+            let allOperators = paginatedResponse.results
+            
+            // Find the operator with the matching employee ID
+            if let operatorDetail = allOperators.first(where: { $0.employeeId == String(operatorId) }) {
+                return operatorDetail
+            } else {
+                print("APIService: Operator with employee ID \(operatorId) not found in the list of operators.")
+                throw APIError.clientNotFound
+            }
         } catch {
+            print("APIService: Failed to decode paginated operator response: \(error)")
             throw APIError.decodingError(error)
         }
     }
@@ -830,6 +878,69 @@ class APIService {
 
             }
 
+    func fetchReceipts(status: String, createdAfter: Date) async throws -> PaginatedReceiptResponse {
+        let baseUrl = settings.productApiUrl
+        guard var components = URLComponents(string: "\(baseUrl)api/warehouse/recibosmercancia/") else {
+            throw APIError.invalidURL
+        }
+
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let dateString = formatter.string(from: createdAfter)
+
+        components.queryItems = [
+            URLQueryItem(name: "status", value: status),
+            URLQueryItem(name: "created_after", value: dateString)
+        ]
+
+        guard let url = components.url else {
+            throw APIError.invalidURL
+        }
+
+        let (data, response) = try await session.data(from: url)
+
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+            throw APIError.serverError(statusCode: statusCode)
+        }
+
+        do {
+            return try JSONDecoder().decode(PaginatedReceiptResponse.self, from: data)
+        } catch {
+            print("--- DECODING ERROR in fetchReceipts ---")
+            print(error)
+            print("-------------------------------------")
+            throw APIError.decodingError(error)
+        }
     }
 
-    
+    func fetchUserRequests(employeeId: String, statuses: [String]) async throws -> PaginatedOrderResponse {
+        let baseUrl = settings.productApiUrl
+        guard var components = URLComponents(string: "\(baseUrl)api/warehouse/requests/") else {
+            throw APIError.invalidURL
+        }
+
+        var queryItems = [URLQueryItem(name: "employee_id", value: employeeId)]
+        for status in statuses {
+            queryItems.append(URLQueryItem(name: "status", value: status))
+        }
+        components.queryItems = queryItems
+
+        guard let url = components.url else {
+            throw APIError.invalidURL
+        }
+
+        let (data, response) = try await session.data(from: url)
+
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+            throw APIError.serverError(statusCode: statusCode)
+        }
+
+        do {
+            return try JSONDecoder().decode(PaginatedOrderResponse.self, from: data)
+        } catch {
+            throw APIError.decodingError(error)
+        }
+    }
+}

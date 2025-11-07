@@ -15,9 +15,15 @@ struct CartBadgeView: View {
                     .fontWeight(.bold)
                     .foregroundColor(.white)
                     .padding(5)
-                    .background(Color.red)
+                    .background(Color.accentColor)
                     .clipShape(Circle())
+                    .overlay(
+                        Circle().stroke(Color.white, lineWidth: 2)
+                    )
+                    .shadow(radius: 10)
                     .offset(x: 8, y: -5)
+                    .scaleEffect(cartManager.itemCount > 0 ? 1.0 : 0.0)
+                    .animation(.spring(), value: cartManager.itemCount)
             }
         }
     }

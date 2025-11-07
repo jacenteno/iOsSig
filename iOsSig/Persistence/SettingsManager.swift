@@ -46,7 +46,19 @@ class SettingsManager: ObservableObject {
         // Nuevas claves para la apariencia
         static let appColorScheme = "appColorScheme"
         static let accentColor = "accentColor"
+        
+        // Clave para permisos dinámicos
+        static let rolePermissions = "rolePermissions"
     }
+
+    // Lista maestra de todos los permisos posibles en la aplicación.
+    // Esto se usará en la UI de edición para mostrar todas las opciones.
+    static let allPermissions: [String] = [
+        "VIEW_HOME", "VIEW_PRODUCTS", "VIEW_SALES", "VIEW_COSTO", "VIEW_INVENTARIO",
+        "VIEW_SALE_PRICES", "VIEW_PURCHASES", "VIEW_PEDIDOS", "VIEW_OFFLINE", "PRINT_LABELS",
+        "VIEW_DASHBOARD", "EDIT_PRICES", "FULL_ACCESS", "VIEW_CLIENTS", "VIEW_DAVID",
+        "VIEW_FRONTERA", "VIEW_ORDERS_LIST", "EDIT_LABEL_FORMATS", "CREAR_PRODUCTO"
+    ].sorted()
 
     // @Published notifica a la UI de SwiftUI cuando un valor cambia
     @Published var productApiUrl: String {
@@ -88,12 +100,20 @@ class SettingsManager: ObservableObject {
             print("SettingsManager: operadorCode saved with value: \(operadorCode)")
         }
     }
-    @Published var userRole: AppUserRole { // Changed type to AppUserRole
+    @Published var userRole: AppUserRole { // Se mantiene para la selección en SettingsView
         didSet { defaults.set(userRole.rawValue, forKey: Keys.userRole) }
     }
     @Published var isActivated: Bool {
         didSet { defaults.set(isActivated, forKey: Keys.isActivated) }
     }
+
+    // --- Nuevo Sistema de Permisos Dinámicos ---
+    @Published var rolePermissions: [String: Set<String>] = [:] {
+        didSet {
+            saveRolePermissions()
+        }
+    }
+    // -----------------------------------------
 
     @Published var selectedProductCodeForSearch: String? = nil
 
@@ -136,22 +156,22 @@ class SettingsManager: ObservableObject {
 
     private init() {
         // Cargar valores guardados o usar valores por defecto
-        self.productApiUrl = defaults.string(forKey: Keys.productApiUrl) ?? "http://192.168.1.13:8000/"
-        self.clientApiUrl = defaults.string(forKey: Keys.clientApiUrl) ?? "http://192.168.1.13:8001/"
-        self.citymallApiUrl = defaults.string(forKey: Keys.citymallApiUrl) ?? "http://10.10.10.1:3000/"
-        self.citymallFronteraApiUrl = defaults.string(forKey: Keys.citymallFronteraApiUrl) ?? "http://10.10.10.1:3001/"
+        self.productApiUrl = defaults.string(forKey: Keys.productApiUrl) ?? "http://192.168.0.11:8093/"
+        self.clientApiUrl = defaults.string(forKey: Keys.clientApiUrl) ?? "http://192.168.0.11:8093/"
+        self.citymallApiUrl = defaults.string(forKey: Keys.citymallApiUrl) ?? "http://138.118.127.162:8088/"
+        self.citymallFronteraApiUrl = defaults.string(forKey: Keys.citymallFronteraApiUrl) ?? "http://138.118.127.162:8088/"
         self.useOldApi = defaults.bool(forKey: Keys.useOldApi)
         self.desplegarVentasApiOld = defaults.bool(forKey: Keys.desplegarVentasApiOld)
         self.desplegarComprasApiOld = defaults.bool(forKey: Keys.desplegarComprasApiOld)
         
         self.companyCode = defaults.object(forKey: Keys.companyCode) as? Int ?? 6
-        self.companyName = defaults.string(forKey: Keys.companyName) ?? "CitMall David"
+        self.companyName = defaults.string(forKey: Keys.companyName) ?? "Tu Tienda"
         self.warehouseCode = defaults.string(forKey: Keys.warehouseCode) ?? "03"
         self.precioCode = defaults.object(forKey: Keys.precioCode) as? Int ?? 1
         let loadedOperadorCode = defaults.object(forKey: Keys.operadorCode) as? Int ?? 1
         self.operadorCode = loadedOperadorCode
         print("SettingsManager: operadorCode loaded with value: \(loadedOperadorCode)")
-        self.userRole = AppUserRole(rawValue: defaults.string(forKey: Keys.userRole) ?? AppUserRole.ROL_0.rawValue) ?? .ROL_0 // Updated to use AppUserRole
+        self.userRole = AppUserRole(rawValue: defaults.string(forKey: Keys.userRole) ?? AppUserRole.ROL_0.rawValue) ?? .ROL_0
         self.isActivated = defaults.bool(forKey: Keys.isActivated)
 
         self.printerConnectionType = PrinterConnectionType(rawValue: defaults.string(forKey: Keys.printerConnectionType) ?? "None") ?? .none
@@ -162,7 +182,48 @@ class SettingsManager: ObservableObject {
         // Cargar propiedades de apariencia o usar valores por defecto
         self.appColorScheme = AppColorScheme(rawValue: defaults.string(forKey: Keys.appColorScheme) ?? AppColorScheme.system.rawValue) ?? .system
         self.accentColor = defaults.string(forKey: Keys.accentColor) ?? Color.customPrimary.toHex() ?? "#FF0000" // Default to red if conversion fails
+        
+        // Cargar o inicializar los permisos de roles
+        loadOrSeedRolePermissions()
     }
+    
+    // MARK: - Dynamic Role Permission Management
+    
+    private func loadOrSeedRolePermissions() {
+        if let data = defaults.data(forKey: Keys.rolePermissions),
+           let decodedPermissions = try? JSONDecoder().decode([String: Set<String>].self, from: data) {
+            // Si existen permisos guardados, los cargamos
+            self.rolePermissions = decodedPermissions
+            print("SettingsManager: Permisos dinámicos cargados desde UserDefaults.")
+        } else {
+            // Si no existen (primera ejecución), los creamos desde el enum estático
+            var initialPermissions: [String: Set<String>] = [:]
+            for role in AppUserRole.allCases {
+                initialPermissions[role.rawValue] = role.permissions
+            }
+            self.rolePermissions = initialPermissions
+            saveRolePermissions() // Guardamos la configuración inicial
+            print("SettingsManager: No se encontraron permisos guardados. Se inicializaron desde el modelo estático.")
+        }
+    }
+
+    func saveRolePermissions() {
+        if let data = try? JSONEncoder().encode(rolePermissions) {
+            defaults.set(data, forKey: Keys.rolePermissions)
+            print("SettingsManager: Permisos dinámicos guardados en UserDefaults.")
+        }
+    }
+
+    /// Comprueba si el rol de usuario actual tiene un permiso específico.
+    func hasPermission(_ permission: String) -> Bool {
+        guard let permissionsForCurrentUser = rolePermissions[userRole.rawValue] else {
+            return false // Si el rol actual no está en el diccionario, no tiene permisos.
+        }
+        
+        // El usuario tiene permiso si se le ha concedido explícitamente O si tiene FULL_ACCESS.
+        return permissionsForCurrentUser.contains("FULL_ACCESS") || permissionsForCurrentUser.contains(permission)
+    }
+
     
     // Función para reiniciar la app (simulado)
     // En una app real, probablemente forzarías un re-renderizado del view root.

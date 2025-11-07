@@ -75,9 +75,8 @@ class HomeViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var timer: AnyCancellable?
 
-    init(apiService: APIService = APIService()) {
-        self.apiService = apiService
-        // fetchSalesData() // Fetch data immediately on init
+    init() {
+        self.apiService = APIService()
         startTimer()
     }
 

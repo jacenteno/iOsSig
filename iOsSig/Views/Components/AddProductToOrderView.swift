@@ -4,6 +4,7 @@ import SwiftUI
 struct AddProductToOrderView: View {
     let product: Product
     @EnvironmentObject var cartManager: CartManager
+    @EnvironmentObject var settings: SettingsManager
     @Environment(\.presentationMode) var presentationMode
 
     @State private var unidades: String = ""
@@ -21,7 +22,7 @@ struct AddProductToOrderView: View {
         NavigationView {
             ZStack {
                 LinearGradient(
-                    colors: [Color(.systemBackground), Color.blue.opacity(0.03)],
+                    colors: [Color(.systemBackground), Color.accentColor.opacity(0.03)],
                     startPoint: .top,
                     endPoint: .bottom
                 )
@@ -76,6 +77,7 @@ struct AddProductToOrderView: View {
                 }
             }
         }
+        .accentColor(Color(hex: settings.accentColor) ?? .accentColor)
     }
 
     // MARK: - Subviews
@@ -86,7 +88,7 @@ struct AddProductToOrderView: View {
                 Circle()
                     .fill(
                         LinearGradient(
-                            colors: [Color.blue.opacity(0.1), Color.cyan.opacity(0.05)],
+                            colors: [Color.accentColor.opacity(0.1), Color.accentColor.opacity(0.05)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -97,7 +99,7 @@ struct AddProductToOrderView: View {
                     .font(.system(size: 36))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [.blue, .cyan],
+                            colors: [.accentColor, Color.accentColor.opacity(0.8)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -135,7 +137,7 @@ struct AddProductToOrderView: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Image(systemName: "archivebox.circle.fill")
-                        .foregroundColor(.blue)
+                        .foregroundColor(.accentColor)
                     Text("Cantidad en Cajas")
                         .font(.headline)
                         .fontWeight(.semibold)
@@ -152,11 +154,11 @@ struct AddProductToOrderView: View {
                 .padding(16)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
-                        .fill(Color.blue.opacity(0.08))
+                        .fill(Color.accentColor.opacity(0.08))
                         .overlay(
                             RoundedRectangle(cornerRadius: 16)
                                 .stroke(
-                                    isCajasFieldFocused ? Color.blue : Color.clear,
+                                    isCajasFieldFocused ? Color.accentColor : Color.clear,
                                     lineWidth: 2
                                 )
                         )
@@ -167,7 +169,7 @@ struct AddProductToOrderView: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Image(systemName: "shippingbox.circle.fill")
-                        .foregroundColor(.blue)
+                        .foregroundColor(.accentColor)
                     Text("Cantidad en Unidades")
                         .font(.headline)
                         .fontWeight(.semibold)
@@ -184,11 +186,11 @@ struct AddProductToOrderView: View {
                 .padding(16)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
-                        .fill(Color.blue.opacity(0.08))
+                        .fill(Color.accentColor.opacity(0.08))
                         .overlay(
                             RoundedRectangle(cornerRadius: 16)
                                 .stroke(
-                                    isUnidadesFieldFocused ? Color.blue : Color.clear,
+                                    isUnidadesFieldFocused ? Color.accentColor : Color.clear,
                                     lineWidth: 2
                                 )
                         )
@@ -233,7 +235,7 @@ struct AddProductToOrderView: View {
                         )
                     } else {
                         LinearGradient(
-                            colors: [Color.blue, Color.cyan],
+                            colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -242,7 +244,7 @@ struct AddProductToOrderView: View {
             )
             .cornerRadius(16)
             .shadow(
-                color: isButtonDisabled ? .clear : .blue.opacity(0.4),
+                color: isButtonDisabled ? .clear : Color.accentColor.opacity(0.4),
                 radius: 12,
                 x: 0,
                 y: 6

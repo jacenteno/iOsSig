@@ -5,16 +5,25 @@ struct SyncProductsView: View {
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
-        VStack(spacing: 0) {
-            if viewModel.isLoading && viewModel.departments.isEmpty {
-                ProgressView("Cargando departamentos...")
-            } else {
-                List {
-                    HeaderSection(viewModel: viewModel)
-                    DepartmentSelectionSection(viewModel: viewModel)
-                    ActionSection(viewModel: viewModel)
+        ZStack {
+            LinearGradient(
+                colors: [Color(.systemBackground), Color.accentColor.opacity(0.03)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                if viewModel.isLoading && viewModel.departments.isEmpty {
+                    ProgressView("Cargando departamentos...")
+                } else {
+                    List {
+                        HeaderSection(viewModel: viewModel)
+                        DepartmentSelectionSection(viewModel: viewModel)
+                        ActionSection(viewModel: viewModel)
+                    }
+                    .listStyle(InsetGroupedListStyle())
                 }
-                .listStyle(InsetGroupedListStyle())
             }
         }
         .navigationTitle("Sincronización")
@@ -43,7 +52,11 @@ private struct HeaderSection: View {
     
     var body: some View {
         Section {
-            VStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .center, spacing: 16) {
+                Image(systemName: "arrow.triangle.2.circlepath.icloud.fill")
+                    .font(.system(size: 40))
+                    .foregroundStyle(LinearGradient(colors: [.accentColor, .accentColor.opacity(0.7)], startPoint: .top, endPoint: .bottom))
+                
                 Text("Productos en la Base de Datos Local")
                     .font(.headline)
                     .foregroundColor(.secondary)
@@ -53,33 +66,20 @@ private struct HeaderSection: View {
                     .foregroundColor(.primary)
                 
                 if viewModel.isSyncing {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Total a Sincronizar")
+                    VStack(spacing: 8) {
+                        HStack {
+                            Text("Sincronizando: \(viewModel.syncMessage)")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                            Text("\(viewModel.totalItemsToSync)")
-                                .font(.headline)
-                        }
-                        Spacer()
-                        VStack(alignment: .trailing) {
-                            Text("Nuevos Registros")
+                            Spacer()
+                            Text("\(Int(viewModel.syncProgress * 100))%")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text("\(viewModel.newItemsSynced)")
-                                .font(.headline)
+                                .fontWeight(.bold)
                         }
+                        ProgressView(value: viewModel.syncProgress)
+                            .progressViewStyle(LinearProgressViewStyle(tint: .accentColor))
                     }
                     .padding(.horizontal)
-
-                    ProgressView(value: viewModel.syncProgress)
-                        .progressViewStyle(LinearProgressViewStyle())
-                        .padding(.horizontal)
-
-                    Text(viewModel.syncMessage)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.top, 4)
                 } else if viewModel.isLoading {
                     ProgressView()
                 }
@@ -94,7 +94,20 @@ private struct DepartmentSelectionSection: View {
     @ObservedObject var viewModel: SyncProductsViewModel
     
     var body: some View {
-        Section(header: Text("Seleccionar Departamentos")) {
+        Section(header: Text("Seleccionar Departamentos"), footer: Text("Selecciona los departamentos que deseas sincronizar.")) {
+            HStack {
+                Button("Seleccionar Todos") {
+                    viewModel.selectAllDepartments()
+                }
+                .buttonStyle(.bordered)
+                Spacer()
+                Button("Deseleccionar Todos") {
+                    viewModel.deselectAllDepartments()
+                }
+                .buttonStyle(.bordered)
+            }
+            .padding(.vertical, 4)
+
             ForEach(viewModel.departments) { department in
                 HStack {
                     Text(department.nomdepto)
@@ -139,13 +152,19 @@ private struct ActionSection: View {
                 }) {
                     HStack {
                         Image(systemName: "arrow.triangle.2.circlepath")
-                        Text("Sincronizar Productos Seleccionados")
+                        Text("Sincronizar \(viewModel.selectedDepartmentIDs.count) Departamentos")
                     }
-                    .frame(maxWidth: .infinity, alignment: .center)
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.accentColor)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
                 }
                 .disabled(viewModel.selectedDepartmentIDs.isEmpty)
             }
         }
+        .listRowBackground(Color.clear)
     }
 }
 

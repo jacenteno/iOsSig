@@ -3,7 +3,7 @@ import Charts // Requires iOS 16+
 
 struct DashboardScreen: View {
     @EnvironmentObject var settings: SettingsManager
-    @StateObject var viewModel = HomeViewModel()
+    @StateObject var viewModel: HomeViewModel
 
     @State private var refreshCountdown: Int = 45
     private let refreshInterval: Int = 45
@@ -18,7 +18,9 @@ struct DashboardScreen: View {
     @State private var cardsAppeared = false
     @Namespace private var animation
 
-    init() {}
+    init() {
+        _viewModel = StateObject(wrappedValue: HomeViewModel())
+    }
 
     var body: some View {
         ZStack {
@@ -88,22 +90,20 @@ struct DashboardScreen: View {
                     }) {
                         Image(systemName: "square.and.arrow.up")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.customPrimary)
                             .padding(8)
                             .background(
                                 Circle()
-                                    .fill(Color.customPrimary.opacity(0.1))
+                                    .fill(Color.accentColor.opacity(0.1))
                             )
                     }
                     
                     NavigationLink(destination: ProactiveAssistantView()) {
                         ZStack {
                             Circle()
-                                .fill(Color.orange.opacity(0.1))
+                                .fill(Color.accentColor.opacity(0.1))
                                 .frame(width: 36, height: 36)
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .font(.system(size: 16))
-                                .foregroundColor(.orange)
                         }
                     }
                 }

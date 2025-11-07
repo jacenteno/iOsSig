@@ -5,7 +5,7 @@ struct MainView: View {
     
     // Estados para controlar la presentación de vistas y alertas
     @State private var showSettings = false
-    @State private var showAboutAlert = false
+    @State private var showAboutView = false
     @State private var showSyncView = false // Estado para la navegación de Sync
     @State private var refreshID = UUID() // New state variable for refreshing UI
     @State private var selectedTab: String = "Inicio"
@@ -54,9 +54,10 @@ struct MainView: View {
                         .navigationTitle(item.title)
                         .toolbar {
                             ToolbarItemGroup(placement: .navigationBarTrailing) {
-                                AppMenuView(showAboutAlert: $showAboutAlert, showSyncView: $showSyncView)
+                                AppMenuView(showAboutView: $showAboutView, showSyncView: $showSyncView)
                                 Button(action: { showSettings = true }) {
                                     Image(systemName: "gearshape.fill")
+                                        .foregroundColor(.accentColor)
                                 }
                             }
                         }
@@ -79,11 +80,11 @@ struct MainView: View {
         }
         .sheet(isPresented: $showSyncView) { // Present SyncProductsView as a sheet
             NavigationView { SyncProductsView() }
+                .accentColor(Color(hex: settings.accentColor) ?? .accentColor)
         }
-        .alert("Acerca de SigApp", isPresented: $showAboutAlert) {
-            Button("Cerrar", role: .cancel) {}
-        } message: {
-            Text("Sistema de Infårmación Gerencial\nVersión: 1.0 (SwiftUI)\n© 2025 JCenteno")
+        .sheet(isPresented: $showAboutView) { 
+            AboutView()
+                .environmentObject(settings)
         }
     }
 }
@@ -93,7 +94,7 @@ struct AppMenuView: View {
     @StateObject private var syncViewModel = SyncProductsViewModel.shared
     
     // Bindings para controlar alertas y navegación
-    @Binding var showAboutAlert: Bool
+    @Binding var showAboutView: Bool
     @Binding var showSyncView: Bool
 
     var body: some View {
@@ -110,7 +111,7 @@ struct AppMenuView: View {
 
             // Sección de Información
             Section(header: Text("Información")) {
-                Button(action: { showAboutAlert = true }) {
+                Button(action: { showAboutView = true }) {
                     HStack {
                         Image(systemName: "info.circle")
                         Text("Acerca de")
@@ -124,6 +125,7 @@ struct AppMenuView: View {
                         .padding(.trailing, 4)
                 }
                 Image(systemName: "ellipsis.circle")
+                    .foregroundColor(.accentColor)
             }
         }
     }

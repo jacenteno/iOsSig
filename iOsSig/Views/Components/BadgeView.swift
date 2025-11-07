@@ -9,7 +9,7 @@ struct Badge: View {
             Text(String(count))
                 .font(.system(size: 12))
                 .padding(5)
-                .background(Color.red)
+                .background(Color.accentColor)
                 .clipShape(Circle())
                 .foregroundColor(.white)
                 // Offset the badge to overlap with the icon

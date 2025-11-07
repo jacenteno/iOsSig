@@ -12,7 +12,7 @@ struct OfflineProductsView: View {
                 HStack {
                     Image(systemName: "arrow.down.circle.fill")
                         .font(.title2)
-                        .foregroundStyle(.blue)
+                        .foregroundColor(.accentColor)
                     Text("Consulta Offline")
                         .font(.title2)
                         .fontWeight(.bold)
@@ -26,7 +26,7 @@ struct OfflineProductsView: View {
                             .padding(.vertical, 4)
                             .background(
                                 Capsule()
-                                    .fill(Color.blue.gradient)
+                                    .fill(Color.accentColor.gradient)
                             )
                     }
                 }
@@ -102,7 +102,7 @@ private struct ProductRow: View {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(
                             LinearGradient(
-                                colors: [Color.blue.opacity(0.1), Color.blue.opacity(0.05)],
+                                colors: [Color.accentColor.opacity(0.1), Color.accentColor.opacity(0.05)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -111,7 +111,7 @@ private struct ProductRow: View {
                         .font(.title2)
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [.blue, .cyan],
+                                colors: [.accentColor, Color.accentColor.opacity(0.8)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -147,7 +147,7 @@ private struct ProductRow: View {
                     icon: "number.circle.fill",
                     label: "Código",
                     value: product.codproducto ?? "S/C",
-                    color: .blue
+                    color: .accentColor
                 )
                 
                 Divider()
@@ -157,7 +157,7 @@ private struct ProductRow: View {
                     icon: "doc.text.fill",
                     label: "Referencia",
                     value: product.referencia ?? "N/A",
-                    color: .purple
+                    color: .accentColor
                 )
                 
                 Divider()
@@ -167,7 +167,7 @@ private struct ProductRow: View {
                     icon: "shippingbox.fill",
                     label: "Bodega",
                     value: product.codbodega ?? "N/A",
-                    color: .orange
+                    color: .accentColor
                 )
             }
             .padding(.vertical, 12)
@@ -179,7 +179,7 @@ private struct ProductRow: View {
                 
                 HStack(spacing: 8) {
                     Image(systemName: "barcode.viewfinder")
-                        .foregroundColor(.blue)
+                        .foregroundColor(.accentColor)
                     Text(barcode)
                         .font(.system(.subheadline, design: .monospaced))
                         .foregroundColor(.secondary)
@@ -187,7 +187,7 @@ private struct ProductRow: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.blue.opacity(0.05))
+                .background(Color.accentColor.opacity(0.05))
             }
             
             Divider()
@@ -251,7 +251,7 @@ private struct ProductRow: View {
                         .font(.system(size: 18, weight: .bold))
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [.blue, .cyan],
+                                colors: [.accentColor, Color.accentColor.opacity(0.8)],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )

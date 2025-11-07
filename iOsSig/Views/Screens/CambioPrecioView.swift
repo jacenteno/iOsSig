@@ -14,7 +14,7 @@ struct CambioPrecioView: View {
             LinearGradient(
                 colors: [
                     Color(.systemBackground),
-                    Color.blue.opacity(0.03)
+                    Color.accentColor.opacity(0.03)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -31,7 +31,7 @@ struct CambioPrecioView: View {
                                 Circle()
                                     .fill(
                                         LinearGradient(
-                                            colors: [Color.blue.opacity(0.1), Color.cyan.opacity(0.05)],
+                                            colors: [Color.accentColor.opacity(0.1), Color.accentColor.opacity(0.05)],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         )
@@ -42,7 +42,7 @@ struct CambioPrecioView: View {
                                     .font(.system(size: 36))
                                     .foregroundStyle(
                                         LinearGradient(
-                                            colors: [.blue, .cyan],
+                                            colors: [.accentColor, .accentColor.opacity(0.8)],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         )
@@ -122,7 +122,7 @@ struct CambioPrecioView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         HStack {
                             Image(systemName: "pencil.circle.fill")
-                                .foregroundColor(.blue)
+                                .foregroundColor(.accentColor)
                             Text("Nuevo Precio")
                                 .font(.headline)
                                 .fontWeight(.semibold)
@@ -133,7 +133,7 @@ struct CambioPrecioView: View {
                             HStack(spacing: 12) {
                                 Text("$")
                                     .font(.system(size: 32, weight: .bold))
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(.accentColor)
                                 
                                 TextField("0.00", text: $viewModel.newPriceString)
                                     .font(.system(size: 32, weight: .semibold, design: .rounded))
@@ -145,11 +145,11 @@ struct CambioPrecioView: View {
                             .padding(.vertical, 16)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.blue.opacity(0.08))
+                                    .fill(Color.accentColor.opacity(0.08))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 16)
                                             .stroke(
-                                                isTextFieldFocused ? Color.blue : Color.clear,
+                                                isTextFieldFocused ? Color.accentColor : Color.clear,
                                                 lineWidth: 2
                                             )
                                     )
@@ -225,7 +225,7 @@ struct CambioPrecioView: View {
                                     )
                                 } else {
                                     LinearGradient(
-                                        colors: [Color.blue, Color.cyan],
+                                        colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
                                         startPoint: .leading,
                                         endPoint: .trailing
                                     )
@@ -236,7 +236,7 @@ struct CambioPrecioView: View {
                         .shadow(
                             color: viewModel.isLoading || viewModel.newPriceString.isEmpty
                                 ? Color.clear
-                                : Color.blue.opacity(0.4),
+                                : Color.accentColor.opacity(0.4),
                             radius: 12,
                             x: 0,
                             y: 6
@@ -249,7 +249,7 @@ struct CambioPrecioView: View {
                     // Info adicional
                     HStack(spacing: 8) {
                         Image(systemName: "info.circle.fill")
-                            .foregroundColor(.blue)
+                            .foregroundColor(.accentColor)
                         Text("El cambio se aplicará de inmediato")
                             .font(.caption)
                             .foregroundColor(.secondary)

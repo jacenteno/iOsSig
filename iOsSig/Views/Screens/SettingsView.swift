@@ -15,21 +15,31 @@ struct SettingsView: View {
 
     @State private var isMasterAuthenticated: Bool = false
 
-    @State private var errorMessage: String? = nil
+        @State private var errorMessage: String? = nil
+
+        
+
+        // State to hold temporary edits
+
+        @State private var tempSettings: TempSettings?
+
+        
+
+        // State for Role Management
+
+        @State private var showPasswordPrompt = false
+
+        @State private var passwordEntry = ""
+
+        @State private var navigateToRoleManagement = false
+
+        
+
+        @Environment(\.presentationMode) var presentationMode
 
     
 
-    // State to hold temporary edits
-
-    @State private var tempSettings: TempSettings?
-
-    
-
-    @Environment(\.presentationMode) var presentationMode
-
-
-
-    private let masterPassword = Secrets.getMasterPassword()
+        private let masterPassword = Secrets.getMasterPassword()
 
 
 
@@ -710,90 +720,278 @@ struct SettingsView: View {
 
             
 
-            Section(header: Text("Rol del Dispositivo").sectionHeader()) {
+                        Section(header: Text("Rol del Dispositivo").sectionHeader()) {
 
-                Picker(selection: Binding($tempSettings)!.userRole) {
+            
 
-                    ForEach(AppUserRole.allCases, id: \.self) {
+                            Picker(selection: Binding($tempSettings)!.userRole) {
 
-                        Text($0.rawValue.capitalized)
+            
+
+                                ForEach(AppUserRole.allCases, id: \.self) {
+
+            
+
+                                    Text($0.rawValue.capitalized)
+
+            
+
+                                }
+
+            
+
+                            } label: {
+
+            
+
+                                Label("Rol", systemImage: "person.text.rectangle.fill")
+
+            
+
+                            }
+
+            
+
+                        }
+
+            
+
+            
+
+            
+
+                        Section(header: Text("Administración Avanzada").sectionHeader()) {
+
+            
+
+                            Button(action: {
+
+            
+
+                                passwordEntry = ""
+
+            
+
+                                showPasswordPrompt = true
+
+            
+
+                            }) {
+
+            
+
+                                Label("Gestionar Roles y Permisos", systemImage: "shield.lefthalf.filled")
+
+            
+
+                            }
+
+            
+
+                            .foregroundColor(.accentColor)
+
+            
+
+                        }
+
+            
 
                     }
 
-                } label: {
+            
 
-                    Label("Rol", systemImage: "person.text.rectangle.fill")
+                    .alert("Acceso Restringido", isPresented: $showPasswordPrompt, actions: {
+
+            
+
+                        SecureField("Clave Maestra", text: $passwordEntry)
+
+            
+
+                            .keyboardType(.numberPad)
+
+            
+
+                        Button("Cancelar", role: .cancel) { }
+
+            
+
+                        Button("Aceptar") {
+
+            
+
+                            if passwordEntry == "999999" {
+
+            
+
+                                navigateToRoleManagement = true
+
+            
+
+                            }
+
+            
+
+                        }
+
+            
+
+                    }, message: {
+
+            
+
+                        Text("Ingrese la clave para gestionar los roles.")
+
+            
+
+                    })
+
+            
+
+                    .background(
+
+            
+
+                        NavigationLink(destination: RoleManagementView(), isActive: $navigateToRoleManagement) {
+
+            
+
+                            EmptyView()
+
+            
+
+                        }
+
+            
+
+                    )
+
+            
 
                 }
 
+            
+
             }
 
+            
 
+            
 
-        }
+            
 
-    }
+            // A struct to hold the temporary settings
 
-}
+            
 
+            struct TempSettings {
 
+            
 
-// A struct to hold the temporary settings
+                var productApiUrl: String
 
-struct TempSettings {
+            
 
-    var productApiUrl: String
+                var clientApiUrl: String
 
-    var clientApiUrl: String
+            
 
-    var citymallApiUrl: String
+                var citymallApiUrl: String
 
-    var citymallFronteraApiUrl: String
+            
 
-    var useOldApi: Bool
+                var citymallFronteraApiUrl: String
 
-    var desplegarVentasApiOld: Bool
+            
 
-    var desplegarComprasApiOld: Bool
+                var useOldApi: Bool
 
-    var companyCode: Int
+            
 
-    var companyName: String
+                var desplegarVentasApiOld: Bool
 
-    var warehouseCode: String
+            
 
-    var precioCode: Int
+                var desplegarComprasApiOld: Bool
 
-    var operadorCode: Int
+            
 
-    var userRole: AppUserRole
+                var companyCode: Int
 
-    var printerConnectionType: SettingsManager.PrinterConnectionType
+            
 
-    var printerIpAddress: String
+                var companyName: String
 
-    var printerPort: String
+            
 
-    var printerMacAddress: String
+                var warehouseCode: String
 
-    var appColorScheme: SettingsManager.AppColorScheme
+            
 
-    var accentColor: Color
+                var precioCode: Int
 
-}
+            
 
+                var operadorCode: Int
 
+            
 
-struct SettingsView_Previews: PreviewProvider {
+                var userRole: AppUserRole
 
-    static var previews: some View {
+            
 
-        SettingsView()
+                var printerConnectionType: SettingsManager.PrinterConnectionType
 
-            .environmentObject(SettingsManager.shared)
+            
 
-    }
+                var printerIpAddress: String
 
-}
+            
+
+                var printerPort: String
+
+            
+
+                var printerMacAddress: String
+
+            
+
+                var appColorScheme: SettingsManager.AppColorScheme
+
+            
+
+                var accentColor: Color
+
+            
+
+            }
+
+            
+
+            
+
+            
+
+            struct SettingsView_Previews: PreviewProvider {
+
+            
+
+                static var previews: some View {
+
+            
+
+                    SettingsView()
+
+            
+
+                        .environmentObject(SettingsManager.shared)
+
+            
+
+                }
+
+            
+
+            }
 
 

@@ -71,6 +71,7 @@ struct ProductScreen: View, CameraScannerViewDelegate {
             NavigationView {
                 OfflineProductsView(isPresented: $showOfflineSearch)
             }
+            .accentColor(Color(hex: settings.accentColor) ?? .accentColor)
         }
         .onAppear {
             if let productCode = settings.selectedProductCodeForSearch {
@@ -194,11 +195,13 @@ struct ProductScreen: View, CameraScannerViewDelegate {
         HStack(spacing: 16) {
             NavigationLink(destination: HacerPedidosScreen()) {
                 CartBadgeView()
+                    .foregroundColor(.accentColor)
             }
             
             NavigationLink(destination: OrdersListScreen()) {
                 Image(systemName: "list.bullet.clipboard")
                     .font(.title3)
+                    .foregroundColor(.accentColor)
             }
         }
     }
@@ -313,6 +316,7 @@ struct ProductCardView: View {
         .sheet(isPresented: $isShowingAddProductSheet) {
             AddProductToOrderView(product: product)
                 .environmentObject(cartManager)
+                .accentColor(Color(hex: settings.accentColor) ?? .accentColor)
         }
     }
     
@@ -340,7 +344,7 @@ struct ProductCardView: View {
                         // SIMULATED ALERT ICON
                         if (product.existencias ?? 0) < 25 {
                             Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(.orange)
+                                .foregroundColor(.yellow)
                                 .font(.caption)
                         }
                     }
@@ -354,7 +358,7 @@ struct ProductCardView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "tag.fill")
                             .font(.caption)
-                            .foregroundColor(.red)
+                            .foregroundColor(.secondary)
                         Text(product.codproducto ?? "N/A")
                             .font(.caption)
                             .fontWeight(.medium)
@@ -389,7 +393,7 @@ struct ProductCardView: View {
                         .font(.caption2)
                         .foregroundColor(.white)
                         .padding(4)
-                        .background(Color.red)
+                        .background(Color.accentColor)
                         .cornerRadius(4)
                 }
                 .padding(8)
@@ -612,9 +616,7 @@ struct ProductCardView: View {
     
                             icon: "dollarsign.circle.fill",
     
-                            title: "Cambios P.",
-    
-                            color: .orange
+                            title: "Cambios P."
     
                         ) {
     
@@ -628,9 +630,7 @@ struct ProductCardView: View {
     
                             icon: "plus.circle.fill",
     
-                            title: "Pedir",
-    
-                            color: .green
+                            title: "Pedir"
     
                         ) {
     
@@ -644,9 +644,7 @@ struct ProductCardView: View {
     
                             icon: "printer.fill",
     
-                            title: "Etiqueta",
-    
-                            color: .purple
+                            title: "Etiqueta"
     
                         ) {
     
@@ -819,7 +817,7 @@ struct DetailCard: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.body)
-                .foregroundColor(highlighted ? .orange : .accentColor)
+                .foregroundColor(highlighted ? .accentColor : .accentColor)
                 .frame(width: 24)
             
             Text(label)
@@ -831,7 +829,7 @@ struct DetailCard: View {
             Text(value)
                 .font(.subheadline)
                 .fontWeight(.semibold)
-                .foregroundColor(highlighted ? .orange : .primary)
+                .foregroundColor(highlighted ? .accentColor : .primary)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)

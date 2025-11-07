@@ -41,6 +41,14 @@ class SyncProductsViewModel: ObservableObject {
     func cancelSync() {
         syncTask?.cancel()
     }
+
+    func selectAllDepartments() {
+        selectedDepartmentIDs = Set(departments.map { $0.coddepartamento })
+    }
+
+    func deselectAllDepartments() {
+        selectedDepartmentIDs.removeAll()
+    }
     
     func onAppear() {
         Task {
