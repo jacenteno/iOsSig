@@ -58,8 +58,19 @@ struct DashboardScreen: View {
                     }
                 }
             } else {
-                // Placeholder while locked
-                EmptyView()
+                if !showLockScreen {
+                    VStack {
+                        Image(systemName: "hand.raised.slash.fill")
+                            .font(.system(size: 60))
+                            .foregroundColor(.secondary)
+                        Text("No autorizado para esta area")
+                            .font(.title)
+                            .foregroundColor(.secondary)
+                    }
+                } else {
+                    // Placeholder while locked and lock screen is appearing
+                    EmptyView()
+                }
             }
         }
         .fullScreenCover(isPresented: $showLockScreen) {
