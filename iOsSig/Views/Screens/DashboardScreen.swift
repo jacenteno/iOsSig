@@ -16,6 +16,9 @@ struct DashboardScreen: View {
     @State private var cardsAppeared = false
     @Namespace private var animation
 
+    // State for password protection
+    @State private var isUnlocked = false
+
     init() {
         _viewModel = StateObject(wrappedValue: HomeViewModel())
     }
@@ -34,24 +37,32 @@ struct DashboardScreen: View {
             )
             .ignoresSafeArea()
 
-            if viewModel.isLoading && viewModel.ventaPorGrupoCaja.isEmpty {
-                loadingView
-            } else if let error = viewModel.error {
-                if !viewModel.products.isEmpty {
-                    productListView
+            if isUnlocked {
+                if viewModel.isLoading && viewModel.ventaPorGrupoCaja.isEmpty {
+                    loadingView
+                } else if let error = viewModel.error {
+                    if !viewModel.products.isEmpty {
+                        productListView
+                    } else {
+                        Color.clear.onAppear { showError = true }
+                    }
                 } else {
-                    Color.clear.onAppear { showError = true }
+                    ScrollView {
+                        dashboardContent
+                            .padding(.top, 8)
+                    }
+                    .refreshable {
+                        viewModel.fetchSalesData()
+                        refreshCountdown = refreshInterval
+                    }
                 }
             } else {
-                ScrollView {
-                    dashboardContent
-                        .padding(.top, 8)
-                }
-                .refreshable {
-                    viewModel.fetchSalesData()
-                    refreshCountdown = refreshInterval
-                }
+                // Placeholder while locked
+                EmptyView()
             }
+        }
+        .fullScreenCover(isPresented: .constant(!isUnlocked && settings.hasPermission("PEDIR_CLAVE_DASHBOARD"))) {
+            AccesoScreen(isUnlocked: $isUnlocked)
         }
         .sheet(isPresented: $showError) {
             ErrorView(
@@ -74,10 +85,17 @@ struct DashboardScreen: View {
             }
         }
         .onAppear {
-            viewModel.fetchSalesData()
-            setupRefreshTimer()
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1)) {
-                cardsAppeared = true
+            if !settings.hasPermission("PEDIR_CLAVE_DASHBOARD") {
+                isUnlocked = true
+            }
+        }
+        .onChange(of: isUnlocked) { unlocked in
+            if unlocked {
+                viewModel.fetchSalesData()
+                setupRefreshTimer()
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1)) {
+                    cardsAppeared = true
+                }
             }
         }
     }
