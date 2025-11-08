@@ -219,6 +219,10 @@ struct HomeScreen: View {
                     .offset(y: cardsAppeared ? 0 : 30)
                 }
                 
+                if !viewModel.salesByHourForChart.isEmpty {
+                    FinancialChartView(data: viewModel.salesByHourForChart)
+                }
+
                 // RESUMEN DE ORDENES
                 OrderSummaryCard(
                     pendingCount: viewModel.pendingOrderCount,
@@ -724,6 +728,52 @@ struct OperatorSummaryCard: View {
                 .stroke(Color.primary.opacity(0.06), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
+    }
+}
+
+struct FinancialChartView: View {
+    let data: [HomeScreenViewModel.ChartableSalesByHour]
+    
+    private func colorFor(index: Int) -> Color {
+        if index == 0 {
+            return .blue // Default for first element
+        }
+        if data[index].amount > data[index - 1].amount {
+            return .blue // Rise
+        } else {
+            return .red // Fall
+        }
+    }
+    
+    var body: some View {
+        VStack {
+            Chart {
+                ForEach(Array(data.enumerated()), id: \.offset) { index, item in
+                    LineMark(
+                        x: .value("Hour", item.hour),
+                        y: .value("Sales", item.amount)
+                    )
+                    .foregroundStyle(colorFor(index: index))
+                    
+                    if item.amount < 0 { // Assuming cutoff is 0
+                        AreaMark(
+                            x: .value("Hour", item.hour),
+                            yStart: .value("Zero", 0),
+                            yEnd: .value("Sales", item.amount)
+                        )
+                        .foregroundStyle(Color.red.opacity(0.3))
+                    }
+                }
+            }
+            .chartYScale(domain: .automatic)
+            .chartXAxis {
+                AxisMarks(preset: .aligned, position: .bottom)
+            }
+            .padding()
+            .background(Color.black)
+            .cornerRadius(10)
+        }
+        .padding()
     }
 }
 

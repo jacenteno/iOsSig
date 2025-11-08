@@ -14,6 +14,7 @@ class HomeScreenViewModel: ObservableObject {
     @Published var totalMontoFinal: Double = 0.0
     @Published var totalClientes: Int = 0
     @Published var totalFacturaDelMes: Double = 0.0
+    @Published var ventaPorHoraGeneral: [String: SalesByHourItem] = [:]
 
     // Properties for Request Orders
     @Published var orders: [RequestOrderResponse] = []
@@ -32,6 +33,20 @@ class HomeScreenViewModel: ObservableObject {
 
     var processingOrderCount: Int {
         orders.filter { $0.status.lowercased() == "procesando" }.count
+    }
+
+    // MARK: - Chart-Ready Computed Properties
+    struct ChartableSalesByHour: Identifiable {
+        let id = UUID()
+        let hour: String
+        let amount: Double
+    }
+
+    var salesByHourForChart: [ChartableSalesByHour] {
+        // Sort by hour to ensure the chart follows the time of day
+        ventaPorHoraGeneral.map { hour, item in
+            ChartableSalesByHour(hour: hour, amount: item.monto)
+        }.sorted { $0.hour < $1.hour }
     }
 
     private let apiService: APIService
@@ -76,6 +91,7 @@ class HomeScreenViewModel: ObservableObject {
                 self.totalMontoFinal = salesData.totalMontoFinal ?? 0.0
                 self.totalClientes = salesData.totalClientes ?? 0
                 self.totalFacturaDelMes = salesData.totalFacturaDelMes ?? 0.0
+                self.ventaPorHoraGeneral = salesData.ventaPorHoraGeneral ?? [:]
             }
         } catch {
             DispatchQueue.main.async {
