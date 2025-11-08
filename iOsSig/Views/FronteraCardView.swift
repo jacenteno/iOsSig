@@ -197,7 +197,8 @@ struct FronteraDetailsView: View {
             InfoRow(label: "Código Producto", value: resultado.codigoproducto ?? "N/A")
             InfoRow(label: "Referencia", value: resultado.referencia ?? "N/A")
             
-            if settings.userRole.hasPermission("VIEW_INVENTARIO") {
+            // if settings.userRole.hasPermission("VIEW_INVENTARIO") {
+            if settings.hasPermission("VIEW_INVENTARIO") {
                 let existencias = resultado.existencias ?? 0
                 let textColor: Color = existencias <= 0 ? .red : .green
                 let textFont: Font = .title3 // Large font
@@ -205,7 +206,8 @@ struct FronteraDetailsView: View {
                 InfoRow(label: "Existencias", value: String(existencias), valueTextColor: textColor, valueTextFont: textFont)
             }
             
-            if settings.userRole.hasPermission("VIEW_COSTO") {
+            // if settings.userRole.hasPermission("VIEW_COSTO") {
+            if settings.hasPermission("VIEW_COSTO") {
                 InfoRow(label: "Último Costo", value: String(format: "$%.6f", resultado.ultimocosto ?? 0.0))
             }
             

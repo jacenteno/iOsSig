@@ -79,7 +79,8 @@ struct CreaProductoView: View {
                 // Save Button Area
                 VStack {
                     Spacer()
-                    if settings.userRole.hasPermission("CREAR_PRODUCTO") {
+                    // if settings.userRole.hasPermission("CREAR_PRODUCTO") {
+                    if settings.hasPermission("CREAR_PRODUCTO") {
                         Button(action: {
                             viewModel.crearProducto()
                         }) {

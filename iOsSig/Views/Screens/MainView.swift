@@ -12,7 +12,7 @@ struct MainView: View {
 
     // Estados para la navegación programática desde el menú
 
-    @State private var version: String = "1.0.0111-2025-jcenteno" // Placeholder for app version
+    @State private var version: String = "1.0.71125-JC" // Placeholder for app version
     @State private var requestCode: String = "iOS CM" // Placeholder for request code
 
     // Define los items del TabView basados en los roles
@@ -21,25 +21,32 @@ struct MainView: View {
         let role = settings.userRole
 
         // La lógica de permisos la puedes ajustar en UserRole.swift
-        if role.hasPermission("VIEW_HOME") {
+        // if role.hasPermission("VIEW_HOME") {
+        if settings.hasPermission("VIEW_HOME") {
             items.append(TabItem(title: "Inicio", icon: "house.fill", view: AnyView(HomeScreen(version: version, requestCode: requestCode, showSettings: $showSettings))))
         }
-        if role.hasPermission("VIEW_DASHBOARD") { // Add Dashboard with permission check
+        // if role.hasPermission("VIEW_DASHBOARD") { // Add Dashboard with permission check
+        if settings.hasPermission("VIEW_DASHBOARD") { // Add Dashboard with permission check
             items.append(TabItem(title: "Panel Vtas", icon: "chart.bar.fill", view: AnyView(DashboardScreen())))
         }
-        if role.hasPermission("VIEW_PRODUCTS") {
+        // if role.hasPermission("VIEW_PRODUCTS") {
+        if settings.hasPermission("VIEW_PRODUCTS") {
             items.append(TabItem(title: "Productos", icon: "barcode.viewfinder", view: AnyView(ProductScreen())))
         }
-        if role.hasPermission("VIEW_FRONTERA") { // Add Frontera with permission check
+        // if role.hasPermission("VIEW_FRONTERA") { // Add Frontera with permission check
+        if settings.hasPermission("VIEW_FRONTERA") { // Add Frontera with permission check
             items.append(TabItem(title: "Frontera", icon: "shippingbox.fill", view: AnyView(FronteraScreen())))
         }
-        if role.hasPermission("VIEW_ORDERS_LIST") {
+        // if role.hasPermission("VIEW_ORDERS_LIST") {
+        if settings.hasPermission("VIEW_ORDERS_LIST") {
             items.append(TabItem(title: "Pedidos", icon: "list.bullet.rectangle.fill", view: AnyView(OrdersListScreen())))
         }
-        if role.hasPermission("VIEW_CLIENTS") {
+        // if role.hasPermission("VIEW_CLIENTS") {
+        if settings.hasPermission("VIEW_CLIENTS") {
             items.append(TabItem(title: "CityPuntos", icon: "person.2.fill", view: AnyView(ClienteScreen())))
         }
-        if role.hasPermission("VIEW_PRODUCTS") { // Assuming VIEW_PRODUCTS is sufficient for offline consultation
+        // if role.hasPermission("VIEW_PRODUCTS") { // Assuming VIEW_PRODUCTS is sufficient for offline consultation
+        if settings.hasPermission("VIEW_PRODUCTS") { // Assuming VIEW_PRODUCTS is sufficient for offline consultation
             items.append(TabItem(title: "Consulta Offline", icon: "magnifyingglass", view: AnyView(OfflineProductsView(isPresented: .constant(true)))))
         }
         return items

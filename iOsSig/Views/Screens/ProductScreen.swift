@@ -746,7 +746,8 @@ struct ProductDetailsModern: View {
             )                .frame(maxWidth: .infinity, alignment: .trailing)
 
 
-            if settings.userRole.hasPermission("VIEW_INVENTARIO") {
+            // if settings.userRole.hasPermission("VIEW_INVENTARIO") {
+            if settings.hasPermission("VIEW_INVENTARIO") {
                 let stockValue = cmdProductDetails?.existencia ?? (product.existencias != nil ? Int(product.existencias!) : 0)
                 HStack(spacing: 12) {
                     Image(systemName: "cube.box.fill")
@@ -771,7 +772,8 @@ struct ProductDetailsModern: View {
                 .cornerRadius(10)
             }
 
-            if settings.userRole.hasPermission("VIEW_COSTO") {
+            // if settings.userRole.hasPermission("VIEW_COSTO") {
+            if settings.hasPermission("VIEW_COSTO") {
                 DetailCard(
                     icon: "dollarsign.circle.fill",
                     label: "Costo",
