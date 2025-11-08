@@ -16,7 +16,7 @@ struct SettingsView: View {
         ZStack(alignment: .bottomTrailing) {
             NavigationView {
                 Group {
-                    if let _ = tempSettings {
+                    if tempSettings != nil {
                         settingsForm
                     } else {
                         loadingView
@@ -35,10 +35,14 @@ struct SettingsView: View {
                     }
                 }
             }
+            .accentColor(tempSettings?.accentColor ?? Color(hex: settings.accentColor) ?? .accentColor)
 
             // Floating Save Button
-            saveButton
+            if tempSettings != nil {
+                saveButton
+            }
         }
+        .onAppear(perform: loadSettings)
     }
 
     // MARK: - VIEWS
@@ -47,14 +51,13 @@ struct SettingsView: View {
         VStack(spacing: 20) {
             ProgressView()
                 .scaleEffect(1.5)
-                .tint(.accentColor)
+                .tint(Color(hex: settings.accentColor) ?? .accentColor)
             Text("Cargando configuración...")
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemGroupedBackground))
-        .onAppear(perform: loadSettings)
     }
 
     private var settingsForm: some View {
@@ -84,7 +87,7 @@ struct SettingsView: View {
                 Circle()
                     .fill(
                         LinearGradient(
-                            colors: [.accentColor, .accentColor.opacity(0.6)],
+                            colors: [tempSettings?.accentColor ?? .accentColor, (tempSettings?.accentColor ?? .accentColor).opacity(0.6)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -96,7 +99,7 @@ struct SettingsView: View {
                     .foregroundColor(.white)
                     .symbolRenderingMode(.hierarchical)
             }
-            .shadow(color: .accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
+            .shadow(color: (tempSettings?.accentColor ?? .accentColor).opacity(0.3), radius: 10, x: 0, y: 5)
 
             Text("Personaliza tu experiencia")
                 .font(.system(size: 22, weight: .bold, design: .rounded))
@@ -153,7 +156,7 @@ struct SettingsView: View {
             }
         } header: {
             Label("Apariencia", systemImage: "paintbrush.fill")
-                .sectionHeader()
+                .sectionHeader(color: tempSettings?.accentColor ?? .accentColor)
         }
     }
 
@@ -169,13 +172,12 @@ struct SettingsView: View {
             ModernToggle(icon: "cart.fill", title: "Mostrar Compras API OLD", isOn: Binding($tempSettings)!.desplegarComprasApiOld)
         } header: {
             Label("Configuración de APIs", systemImage: "network.badge.shield.half.filled")
-                .sectionHeader()
+                .sectionHeader(color: tempSettings?.accentColor ?? .accentColor)
         }
     }
 
     private var storeSection: some View {
         Section {
-            //ModernTextField(icon: "building.2.fill", title: "Compañía", text: Binding($tempSettings)!.companyCode, keyboard: .numberPad)
             ModernTextField(
                 icon: "building.2.fill",
                 title: "Compañía",
@@ -188,7 +190,6 @@ struct SettingsView: View {
             
             ModernTextField(icon: "chart.bar.fill", title: "Nombre de Tienda", text: Binding($tempSettings)!.companyName, capitalization: .allCharacters)
             ModernTextField(icon: "archivebox.circle.fill", title: "Bodega", text: Binding($tempSettings)!.warehouseCode, capitalization: .allCharacters)
-            // ModernTextField(icon: "dollarsign.circle.fill", title: "Precio", text: Binding($tempSettings)!.precioCode, keyboard: .numberPad)
             ModernTextField(
                 icon: "dollarsign.circle.fill",
                 title: "Precio",
@@ -198,7 +199,6 @@ struct SettingsView: View {
                 ),
                 keyboard: .numberPad
             )
-            //ModernTextField(icon: "person.badge.key.fill", title: "Operador", text: Binding($tempSettings)!.operadorCode, keyboard: .numberPad)
             ModernTextField(
                       icon: "person.badge.key.fill",
                       title: "Operador",
@@ -210,7 +210,7 @@ struct SettingsView: View {
                   )
         } header: {
             Label("Configuración de Tienda", systemImage: "storefront.fill")
-                .sectionHeader()
+                .sectionHeader(color: tempSettings?.accentColor ?? .accentColor)
         }
     }
 
@@ -234,7 +234,7 @@ struct SettingsView: View {
             }
         } header: {
             Label("Configuración de Impresora", systemImage: "printer.dotmatrix.fill")
-                .sectionHeader()
+                .sectionHeader(color: tempSettings?.accentColor ?? .accentColor)
         }
     }
 
@@ -249,7 +249,7 @@ struct SettingsView: View {
             }
         } header: {
             Label("Rol del Dispositivo", systemImage: "person.badge.shield.checkmark.fill")
-                .sectionHeader()
+                .sectionHeader(color: tempSettings?.accentColor ?? .accentColor)
         }
     }
 
@@ -261,13 +261,11 @@ struct SettingsView: View {
                         .fontWeight(.medium)
                 } icon: {
                     Image(systemName: "shield.lefthalf.filled")
-                        .foregroundColor(.accentColor)
                 }
             }
-            .foregroundColor(.accentColor)
         } header: {
             Label("Administración Avanzada", systemImage: "shield.checkerboard")
-                .sectionHeader()
+                .sectionHeader(color: tempSettings?.accentColor ?? .accentColor)
         }
     }
 
@@ -312,14 +310,14 @@ struct SettingsView: View {
             .padding(.horizontal, 24)
             .background(
                 LinearGradient(
-                    colors: [.accentColor, .accentColor.opacity(0.8)],
+                    colors: [tempSettings?.accentColor ?? .accentColor, (tempSettings?.accentColor ?? .accentColor).opacity(0.8)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
             )
             .foregroundColor(.white)
             .cornerRadius(30)
-            .shadow(color: .accentColor.opacity(0.4), radius: 10, x: 0, y: 5)
+            .shadow(color: (tempSettings?.accentColor ?? .accentColor).opacity(0.4), radius: 10, x: 0, y: 5)
         }
         .padding(.trailing, 20)
         .padding(.bottom, 20)
@@ -485,10 +483,10 @@ struct ModernToggle: View {
 }
 
 extension View {
-    func sectionHeader() -> some View {
+    func sectionHeader(color: Color) -> some View {
         self
             .font(.system(size: 14, weight: .semibold))
-            .foregroundColor(.accentColor)
+            .foregroundColor(color)
             .textCase(.uppercase)
             .padding(.top, 8)
     }
