@@ -205,17 +205,19 @@ struct HomeScreen: View {
         } else {
             VStack(spacing: 20) {
                 // TARJETA DESTACADA
-                FeaturedSummaryCard(
-                    title: "Ventas de Hoy",
-                    value: viewModel.totalMontoFinal,
-                    icon: "dollarsign.circle.fill",
-                    format: .currency,
-                    primaryColor: .green,
-                    secondaryColor: .mint
-                )
-                .padding(.horizontal)
-                .opacity(cardsAppeared ? 1 : 0)
-                .offset(y: cardsAppeared ? 0 : 30)
+                if settings.hasPermission("VER_VENTA_HOME") {
+                    FeaturedSummaryCard(
+                        title: "Ventas de Hoy",
+                        value: viewModel.totalMontoFinal,
+                        icon: "dollarsign.circle.fill",
+                        format: .currency,
+                        primaryColor: .green,
+                        secondaryColor: .mint
+                    )
+                    .padding(.horizontal)
+                    .opacity(cardsAppeared ? 1 : 0)
+                    .offset(y: cardsAppeared ? 0 : 30)
+                }
                 
                 // RESUMEN DE ORDENES
                 OrderSummaryCard(
