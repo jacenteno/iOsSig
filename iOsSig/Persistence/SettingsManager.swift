@@ -215,13 +215,18 @@ class SettingsManager: ObservableObject {
     }
 
     /// Comprueba si el rol de usuario actual tiene un permiso específico.
-    func hasPermission(_ permission: String) -> Bool {
+    func hasPermission(_ permission: String, ignoreFullAccess: Bool = false) -> Bool {
         guard let permissionsForCurrentUser = rolePermissions[userRole.rawValue] else {
             return false // Si el rol actual no está en el diccionario, no tiene permisos.
         }
         
-        // El usuario tiene permiso si se le ha concedido explícitamente O si tiene FULL_ACCESS.
-        return permissionsForCurrentUser.contains("FULL_ACCESS") || permissionsForCurrentUser.contains(permission)
+        // Si no se ignora el acceso total y el usuario lo tiene, conceder permiso.
+        if !ignoreFullAccess && permissionsForCurrentUser.contains("FULL_ACCESS") {
+            return true
+        }
+        
+        // De lo contrario, comprobar solo el permiso específico.
+        return permissionsForCurrentUser.contains(permission)
     }
 
     

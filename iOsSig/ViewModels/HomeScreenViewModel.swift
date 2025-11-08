@@ -36,11 +36,6 @@ class HomeScreenViewModel: ObservableObject {
     }
 
     // MARK: - Chart-Ready Computed Properties
-    struct ChartableSalesByHour: Identifiable {
-        let id = UUID()
-        let hour: String
-        let amount: Double
-    }
 
     var salesByHourForChart: [ChartableSalesByHour] {
         // Sort by hour to ensure the chart follows the time of day

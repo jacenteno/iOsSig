@@ -43,12 +43,6 @@ class HomeViewModel: ObservableObject {
 
     // MARK: - Chart-Ready Computed Properties
 
-    struct ChartableSalesByHour: Identifiable {
-        let id = UUID()
-        let hour: String
-        let amount: Double
-    }
-
     var salesByAreaForChart: [SalesSummaryItem] {
         // Sort by amount descending to show the most important areas first
         ventaPorGrupoCaja.values.sorted { $0.monto > $1.monto }
