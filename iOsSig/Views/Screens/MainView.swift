@@ -10,6 +10,10 @@ struct MainView: View {
     @State private var refreshID = UUID() // New state variable for refreshing UI
     @State private var selectedTab: String = "Inicio"
 
+    // Estados para la protección de la configuración
+    @State private var showLockScreen = false
+    @State private var isSettingsUnlocked = false
+
     // Estados para la navegación programática desde el menú
 
     @State private var version: String = "1.0.71125-JC" // Placeholder for app version
@@ -62,7 +66,10 @@ struct MainView: View {
                         .toolbar {
                             ToolbarItemGroup(placement: .navigationBarTrailing) {
                                 AppMenuView(showAboutView: $showAboutView, showSyncView: $showSyncView)
-                                Button(action: { showSettings = true }) {
+                                Button(action: {
+                                    isSettingsUnlocked = false
+                                    showLockScreen = true
+                                }) {
                                     Image(systemName: "gearshape.fill")
                                         .foregroundColor(.accentColor)
                                 }
@@ -79,7 +86,14 @@ struct MainView: View {
             }
         }
         .id(refreshID) // Apply refreshID to force re-render of TabView
-
+        .fullScreenCover(isPresented: $showLockScreen) {
+            AccesoScreen(isUnlocked: $isSettingsUnlocked, showLockScreen: $showLockScreen)
+        }
+        .onChange(of: isSettingsUnlocked) { unlocked in
+            if unlocked {
+                showSettings = true
+            }
+        }
         .sheet(isPresented: $showSettings, onDismiss: { // Add onDismiss action
             refreshID = UUID() // Change refreshID to force MainView to re-evaluate its body
         }) {
