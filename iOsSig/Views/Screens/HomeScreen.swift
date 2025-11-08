@@ -768,7 +768,11 @@ struct FinancialChartView: View {
             }
             .chartYScale(domain: .automatic)
             .chartXAxis {
-                AxisMarks(preset: .aligned, position: .bottom)
+                AxisMarks(position: .bottom) { value in
+                    AxisGridLine()
+                    AxisTick()
+                    AxisValueLabel(font: .system(size: 10))
+                }
             }
             .padding()
             .background(Color.black)
