@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 struct HomeScreen: View {
     @StateObject private var viewModel = HomeScreenViewModel()
