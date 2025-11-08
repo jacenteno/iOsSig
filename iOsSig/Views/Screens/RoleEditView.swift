@@ -23,10 +23,9 @@ struct RoleEditView: View {
             }
         }
         .navigationTitle("Editar Rol")
-        .navigationBarItems(trailing: Button("Guardar") {
-            viewModel.saveChanges()
-            presentationMode.wrappedValue.dismiss()
-        })
+        .toolbar {
+            // El botón de guardar se ha eliminado porque los cambios son automáticos.
+        }
     }
 }
 

@@ -25,18 +25,20 @@ class RoleEditViewModel: ObservableObject {
         return permissions.contains(permission)
     }
 
-    /// Activa o desactiva un permiso para el rol.
+    /// Activa o desactiva un permiso para el rol y guarda automáticamente.
     func togglePermission(_ permission: String) {
         if permissions.contains(permission) {
             permissions.remove(permission)
         } else {
             permissions.insert(permission)
         }
+        saveChanges()
     }
 
     /// Guarda los cambios en el SettingsManager.
     func saveChanges() {
         settings.rolePermissions[roleName] = permissions
+        settings.saveRolePermissions() // Llama explícitamente a guardar
         // El `didSet` en `rolePermissions` de SettingsManager se encargará de guardarlo en UserDefaults.
         print("Permisos para el rol '\(roleName)' actualizados.")
     }
