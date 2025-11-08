@@ -10,10 +10,6 @@ struct SettingsView: View {
 
     @State private var tempSettings: TempSettings?
 
-    @State private var showPasswordPrompt = false
-    @State private var passwordEntry = ""
-    @State private var navigateToRoleManagement = false
-
     private let masterPassword = Secrets.getMasterPassword()
 
     var body: some View {
@@ -80,23 +76,6 @@ struct SettingsView: View {
             .padding()
         }
         .background(Color(.systemGroupedBackground))
-        .alert("Acceso Restringido", isPresented: $showPasswordPrompt) {
-            SecureField("Clave Maestra", text: $passwordEntry)
-                .keyboardType(.numberPad)
-            Button("Cancelar", role: .cancel) { }
-            Button("Aceptar") {
-                if passwordEntry == "999999" {
-                    navigateToRoleManagement = true
-                }
-            }
-        } message: {
-            Text("Ingrese la clave para gestionar los roles.")
-        }
-        .background(
-            NavigationLink(destination: RoleManagementView(), isActive: $navigateToRoleManagement) {
-                EmptyView()
-            }
-        )
     }
 
     private var settingsHeader: some View {
@@ -276,10 +255,7 @@ struct SettingsView: View {
 
     private var adminSection: some View {
         Section {
-            Button(action: {
-                passwordEntry = ""
-                showPasswordPrompt = true
-            }) {
+            NavigationLink(destination: RoleManagementView()) {
                 Label {
                     Text("Gestionar Roles y Permisos")
                         .fontWeight(.medium)
