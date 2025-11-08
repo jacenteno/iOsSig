@@ -771,7 +771,7 @@ struct FinancialChartView: View {
                 AxisMarks(position: .bottom) { value in
                     AxisGridLine()
                     AxisTick()
-                    AxisValueLabel(font: Font.system(size: 10))
+                    AxisValueLabel().font(.system(size: 10))
                 }
             }
             .padding()
