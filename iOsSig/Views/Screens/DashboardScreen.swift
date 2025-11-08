@@ -18,6 +18,7 @@ struct DashboardScreen: View {
 
     // State for password protection
     @State private var isUnlocked = false
+    @State private var showLockScreen = false
 
     init() {
         _viewModel = StateObject(wrappedValue: HomeViewModel())
@@ -61,8 +62,8 @@ struct DashboardScreen: View {
                 EmptyView()
             }
         }
-        .fullScreenCover(isPresented: .constant(!isUnlocked && settings.hasPermission("PEDIR_CLAVE_DASHBOARD"))) {
-            AccesoScreen(isUnlocked: $isUnlocked)
+        .fullScreenCover(isPresented: $showLockScreen) {
+            AccesoScreen(isUnlocked: $isUnlocked, showLockScreen: $showLockScreen)
         }
         .sheet(isPresented: $showError) {
             ErrorView(
@@ -85,7 +86,10 @@ struct DashboardScreen: View {
             }
         }
         .onAppear {
-            if !settings.hasPermission("PEDIR_CLAVE_DASHBOARD") {
+            if settings.hasPermission("PEDIR_CLAVE_DASHBOARD") {
+                isUnlocked = false
+                showLockScreen = true
+            } else {
                 isUnlocked = true
             }
         }

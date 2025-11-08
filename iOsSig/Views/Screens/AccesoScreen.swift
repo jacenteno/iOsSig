@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AccesoScreen: View {
     @Binding var isUnlocked: Bool
+    @Binding var showLockScreen: Bool
     
     @State private var enteredPassword = ""
     @State private var passwordError = false
@@ -37,6 +38,7 @@ struct AccesoScreen: View {
             Button(action: {
                 if enteredPassword == correctPassword {
                     isUnlocked = true
+                    showLockScreen = false
                 } else {
                     passwordError = true
                     enteredPassword = ""
@@ -50,6 +52,11 @@ struct AccesoScreen: View {
                     .background(Color.accentColor)
                     .cornerRadius(10)
             }
+            
+            Button("Cancelar") {
+                showLockScreen = false
+            }
+            .padding()
         }
         .padding()
     }
@@ -57,6 +64,6 @@ struct AccesoScreen: View {
 
 struct AccesoScreen_Previews: PreviewProvider {
     static var previews: some View {
-        AccesoScreen(isUnlocked: .constant(false))
+        AccesoScreen(isUnlocked: .constant(false), showLockScreen: .constant(true))
     }
 }
