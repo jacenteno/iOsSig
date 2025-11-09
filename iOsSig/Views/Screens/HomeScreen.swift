@@ -55,6 +55,7 @@ struct HomeScreen: View {
                         .padding(.horizontal)
                 }
                 .padding(.vertical, 20)
+                .frame(maxWidth: .infinity) // <-- ADDED THIS LINE
             }
             .refreshable {
                 viewModel.fetchData()

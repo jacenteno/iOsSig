@@ -17,18 +17,16 @@ struct OfflineProductsView: View {
                         .font(.title2)
                         .fontWeight(.bold)
                     Spacer()
-                    if !viewModel.products.isEmpty {
-                        Text("\(viewModel.products.count)")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
-                            .background(
-                                Capsule()
-                                    .fill(Color.accentColor.gradient)
-                            )
-                    }
+                    Text("Registros: \(viewModel.products.count)")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(Color.accentColor.gradient)
+                        )
                 }
                 .padding(.horizontal)
                 .padding(.top, 8)
