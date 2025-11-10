@@ -2,11 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Esta aplicación utiliza la cámara para escanear códigos de barras de productos para una búsqueda rápida. No se almacenan ni recopilan imágenes ni videos.</string>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>

@@ -166,7 +166,7 @@ class SettingsManager: ObservableObject {
         
         self.companyCode = defaults.object(forKey: Keys.companyCode) as? Int ?? 6
         self.companyName = defaults.string(forKey: Keys.companyName) ?? "Tu Tienda"
-        self.warehouseCode = defaults.string(forKey: Keys.warehouseCode) ?? "03"
+        self.warehouseCode = defaults.string(forKey: Keys.warehouseCode) ?? "01"
         self.precioCode = defaults.object(forKey: Keys.precioCode) as? Int ?? 1
         let loadedOperadorCode = defaults.object(forKey: Keys.operadorCode) as? Int ?? 1
         self.operadorCode = loadedOperadorCode

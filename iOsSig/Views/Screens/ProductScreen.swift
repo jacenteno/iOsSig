@@ -3,6 +3,7 @@ import Combine
 
 struct ProductScreen: View, CameraScannerViewDelegate {
     @StateObject private var viewModel: ProductViewModel
+    @FocusState private var isSearchFieldFocused: Bool
     @State private var showFilters = false
     @State private var isShowingScanner = false
     @State private var navigateToCambioPrecio = false
@@ -105,6 +106,7 @@ struct ProductScreen: View, CameraScannerViewDelegate {
                     viewModel.searchProductByCode()
                 })
                 .textFieldStyle(.plain)
+                .focused($isSearchFieldFocused)
                 
                 if !viewModel.searchQuery.isEmpty {
                     Button(action: {
@@ -271,6 +273,8 @@ struct ProductScreen: View, CameraScannerViewDelegate {
     func didScanBarcode(code: String) {
         viewModel.searchQuery = code
         isShowingScanner = false
+        viewModel.searchProductByCode()
+        isSearchFieldFocused = false // Prevent keyboard from appearing
     }
 }
 

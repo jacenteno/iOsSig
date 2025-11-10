@@ -66,9 +66,11 @@ class FronteraViewModel: ObservableObject {
             } catch let error as APIError {
                 logger.error("❌ APIError: \(String(describing: error))")
                 self.errorMessage = "Error API: \(error.localizedDescription)"
+                self.searchQuery = "" // Clear search query after API error
             } catch {
                 logger.error("❌ Error general: \(error.localizedDescription)")
                 self.errorMessage = "Error: \(error.localizedDescription)"
+                self.searchQuery = "" // Clear search query after general error
             }
             
             logger.info("🏁 Finalizando consulta (isLoading = false)")

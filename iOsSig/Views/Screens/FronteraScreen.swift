@@ -2,6 +2,7 @@ import SwiftUI
 
 struct FronteraScreen: View, CameraScannerViewDelegate {
     @StateObject private var viewModel = FronteraViewModel()
+    @FocusState private var isSearchFieldFocused: Bool
     @State private var isShowingScanner = false
 
     var body: some View {
@@ -30,6 +31,7 @@ struct FronteraScreen: View, CameraScannerViewDelegate {
                     viewModel.consultarCodigo()
                 })
                 .textFieldStyle(.plain)
+                .focused($isSearchFieldFocused)
 
                 if !viewModel.searchQuery.isEmpty {
                     Button(action: { viewModel.searchQuery = "" }) {
@@ -74,7 +76,8 @@ struct FronteraScreen: View, CameraScannerViewDelegate {
             ErrorState(message: errorMessage, onRetry: {
                 viewModel.consultarCodigo()
             })
-        } else if let resultado = viewModel.resultado {
+        }
+        else if let resultado = viewModel.resultado {
             ScrollView {
                 FronteraCardView(resultado: resultado)
                     .padding()
@@ -89,7 +92,8 @@ struct FronteraScreen: View, CameraScannerViewDelegate {
     func didScanBarcode(code: String) {
         viewModel.searchQuery = code
         isShowingScanner = false
-        // La consulta se dispara automáticamente gracias al binding con debounce en el ViewModel
+        viewModel.consultarCodigo() // Trigger search explicitly
+        isSearchFieldFocused = false // Prevent keyboard from appearing
     }
 }
 

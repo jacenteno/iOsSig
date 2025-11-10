@@ -29,7 +29,8 @@ class CambioPrecioViewModel: ObservableObject {
     }
 
     func updatePrice(codigo: String) async {
-        print("Iniciando cambio de precio para el código: \(codigo)")
+        let trimmedCodigo = codigo.trimmingCharacters(in: .whitespacesAndNewlines)
+        print("Iniciando cambio de precio para el código: \(trimmedCodigo)")
         guard let product = product else {
             print("Error: Producto no cargado.")
             return
@@ -71,7 +72,7 @@ class CambioPrecioViewModel: ObservableObject {
                 "preciodeventa": newPrice
             ]
             print("Enviando datos para actualizar: \(updateData)")
-            try await apiService.updateProductPrice(codigo: codigo, updateData: updateData)
+            try await apiService.updateProductPrice(codigo: trimmedCodigo, updateData: updateData)
             let oldPriceString = String(format: "%.2f", product.preciodeventa ?? 0.0)
             let newPriceStringFormatted = String(format: "%.2f", newPrice)
             alertMessage = "Precio actualizado de $\(oldPriceString) a $\(newPriceStringFormatted)."

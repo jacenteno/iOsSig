@@ -64,7 +64,7 @@ class CreaProductoViewModel: ObservableObject {
                     isLoading = false
                     return
                 } catch let error as APIError {
-                    if case let APIError.serverError(statusCode) = error, statusCode == 404 {
+                    if error.isNotFoundError {
                         // This is what we want, product does not exist
                     } else {
                         // Any other error is unexpected
@@ -97,10 +97,10 @@ class CreaProductoViewModel: ObservableObject {
                     codClase: nil, // No presente en el form
                     ultCosto: nil, // No presente en el form
                     existencias: 0, // Valor por defecto
-                    codigoBarra: referencia, // Now maps to UI 'Referencia' field
+                    codigoBarra: codigobarra,
                     costoFob: nil, // No presente en el form
                     desProducto: desproducto,
-                    referencia: codigobarra, // Now maps to UI 'Código de Barra' field
+                    referencia: codigobarra,
                     codDep: departamentoSeleccionado,
                     prodPesado: nil, // No presente en el form
                     codCompania: settings.companyCode,

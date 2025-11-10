@@ -93,6 +93,7 @@ class ProductViewModel: ObservableObject {
                     self.productSource = source
                     self.canLoadMorePages = false
                     self.isLoading = false
+                    self.searchQuery = "" // Clear search query after successful fetch
                     return
                 } else {
                     // TODO: Refactor list fetching to use the repository as well.
@@ -117,8 +118,11 @@ class ProductViewModel: ObservableObject {
                     print("Search task cancelled.")
                     return
                 }
-                if case let APIError.serverError(statusCode) = error, statusCode == 404 {
-                    guard settings.userRole.hasPermission("CREAR_PRODUCTO") else {
+
+                let apiError = error as? APIError
+
+                if apiError?.isNotFoundError == true {
+                    guard settings.hasPermission("CREAR_PRODUCTO") else {
                         self.errorMessage = "Producto no encontrado."
                         return
                     }
@@ -129,6 +133,7 @@ class ProductViewModel: ObservableObject {
                     self.errorMessage = "Error: \(error.localizedDescription)"
                 }
                 self.isLoading = false
+                self.searchQuery = "" // Clear search query after error
             }
         }
     }

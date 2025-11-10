@@ -22,15 +22,19 @@ struct CameraScannerView: UIViewControllerRepresentable {
 
     class Coordinator: NSObject, AVCaptureMetadataOutputObjectsDelegate {
         var parent: CameraScannerView
+        var didFindCode = false
 
         init(_ parent: CameraScannerView) {
             self.parent = parent
         }
 
         func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
-            if let metadataObject = metadataObjects.first {
+            if !didFindCode, let metadataObject = metadataObjects.first {
                 guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject else { return }
                 guard let stringValue = readableObject.stringValue else { return }
+                
+                didFindCode = true // Set flag to true to prevent further scans
+                
                 AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
                 parent.delegate.didScanBarcode(code: stringValue)
             }
@@ -82,9 +86,31 @@ class ScannerViewController: UIViewController {
         previewLayer.videoGravity = .resizeAspectFill
         view.layer.addSublayer(previewLayer)
 
+        // Add Cancel Button
+        let cancelButton = UIButton(type: .system)
+        cancelButton.setTitle("Cancelar", for: .normal)
+        cancelButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .bold)
+        cancelButton.setTitleColor(.white, for: .normal)
+        cancelButton.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        cancelButton.layer.cornerRadius = 10
+        cancelButton.addTarget(self, action: #selector(dismissScanner), for: .touchUpInside)
+        
+        view.addSubview(cancelButton)
+        cancelButton.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            cancelButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            cancelButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
+            cancelButton.widthAnchor.constraint(equalToConstant: 100),
+            cancelButton.heightAnchor.constraint(equalToConstant: 40)
+        ])
+
         DispatchQueue.global(qos: .background).async {
             self.captureSession.startRunning()
         }
+    }
+
+    @objc func dismissScanner() {
+        self.dismiss(animated: true, completion: nil)
     }
 
     func failed() {

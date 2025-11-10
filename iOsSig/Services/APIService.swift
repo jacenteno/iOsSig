@@ -4,11 +4,22 @@ import Foundation
 enum APIError: Error, CustomStringConvertible, LocalizedError {
     case invalidURL
     case requestFailed(Error)
-    case serverError(statusCode: Int)
+    case serverError(statusCode: Int, detail: String? = nil)
     case decodingError(Error)
     case clientNotFound
     case productNotFound
     case timeout
+
+    var isNotFoundError: Bool {
+        switch self {
+        case .serverError(let statusCode, _):
+            return statusCode == 404
+        case .productNotFound, .clientNotFound:
+            return true
+        default:
+            return false
+        }
+    }
 
     var errorDescription: String? {
         switch self {
@@ -16,7 +27,22 @@ enum APIError: Error, CustomStringConvertible, LocalizedError {
             return "La URL especificada no es válida."
         case .requestFailed(let error):
             return "La solicitud de red falló: \(error.localizedDescription)"
-        case .serverError(let statusCode):
+        case .serverError(let statusCode, let detail):
+            if let detail = detail, !detail.isEmpty {
+                // Intenta decodificar el detalle si es un JSON string
+                if let data = detail.data(using: .utf8) {
+                    do {
+                        if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+                           let message = json.values.first as? [String] {
+                            return "Error del servidor (código: \(statusCode)): \(message.first ?? detail)"
+                        }
+                    } catch {
+                        // Si no es un JSON, devuelve el detalle tal cual
+                        return "Error del servidor (código: \(statusCode)): \(detail)"
+                    }
+                }
+                return "Error del servidor (código: \(statusCode)): \(detail)"
+            }
             return "Error del servidor con código: \(statusCode)"
         case .decodingError(let error):
             return "Error al decodificar la respuesta del servidor: \(error.localizedDescription)"
@@ -72,7 +98,7 @@ class APIService {
         
         do {
             return try await performRequest(url: url, validStatusCodes: [200])
-        } catch APIError.serverError(let statusCode) where statusCode == 404 {
+        } catch APIError.serverError(let statusCode, _) where statusCode == 404 {
             throw APIError.productNotFound
         } catch {
             throw error
@@ -81,8 +107,12 @@ class APIService {
 
     // Actualiza el precio de un producto
     func updateProductPrice(codigo: String, updateData: [String: Any]) async throws {
+        let trimmedCodigo = codigo.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let encodedCodigo = trimmedCodigo.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else {
+            throw APIError.invalidURL
+        }
         let baseUrl = settings.productApiUrl
-        guard let url = URL(string: "\(baseUrl)api/actualizar-precio/\(codigo)/") else {
+        guard let url = URL(string: "\(baseUrl)api/actualizar-precio/\(encodedCodigo)/") else {
             throw APIError.invalidURL
         }
 
@@ -92,13 +122,24 @@ class APIService {
 
         request.httpBody = try? JSONSerialization.data(withJSONObject: updateData)
 
-        let (_, response) = try await session.data(for: request)
+        let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError.serverError(statusCode: -1)
         }
-        guard httpResponse.statusCode == 200 || httpResponse.statusCode == 204 else {
-            throw APIError.serverError(statusCode: httpResponse.statusCode)
+        
+        guard (200...299).contains(httpResponse.statusCode) else {
+            // If we have an error, let's try to decode the error message from the server
+            if let errorBody = String(data: data, encoding: .utf8) {
+                print("--- SERVER ERROR RESPONSE ---")
+                print(errorBody)
+                print("---------------------------")
+                // Create a more descriptive error
+                let detailedError = APIError.serverError(statusCode: httpResponse.statusCode, detail: errorBody)
+                throw detailedError
+            } else {
+                throw APIError.serverError(statusCode: httpResponse.statusCode)
+            }
         }
         // No se espera contenido en la respuesta, solo el código de éxito
     }
@@ -638,7 +679,6 @@ class APIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         let encoder = JSONEncoder()
-        encoder.keyEncodingStrategy = .convertToSnakeCase
 
         request.httpBody = try encoder.encode(producto)
 
@@ -647,8 +687,16 @@ class APIService {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError.serverError(statusCode: -1)
         }
-        guard httpResponse.statusCode == 200 || httpResponse.statusCode == 201 else {
-            throw APIError.serverError(statusCode: httpResponse.statusCode)
+        
+        guard (200...201).contains(httpResponse.statusCode) else {
+            if let errorBody = String(data: data, encoding: .utf8) {
+                print("--- SERVER ERROR RESPONSE (createProducto) ---")
+                print(errorBody)
+                print("---------------------------------------------")
+                throw APIError.serverError(statusCode: httpResponse.statusCode, detail: errorBody)
+            } else {
+                throw APIError.serverError(statusCode: httpResponse.statusCode)
+            }
         }
 
         if let responseString = String(data: data, encoding: .utf8) {
