@@ -11,7 +11,6 @@ struct DashboardScreen: View {
 
     @State private var capturedImage: UIImage?
     @State private var isShowingShareSheet = false
-    @State private var contentHeight: CGFloat = .zero
     @State private var isRendering = false // For loading indicator
 
     @State private var cardsAppeared = false
@@ -166,11 +165,6 @@ struct DashboardScreen: View {
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 20)
-        .background(
-            GeometryReader { proxy in
-                Color.clear.onAppear { contentHeight = proxy.size.height }
-            }
-        )
     }
 
     // MARK: - HERO SECTION
@@ -405,8 +399,9 @@ struct DashboardScreen: View {
                 let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                 impactFeedback.impactOccurred()
                 
-                // Use the new async render function
-                let image = await dashboardContent.renderAsImage(size: CGSize(width: UIScreen.main.bounds.width, height: contentHeight))
+                // Use the new async render function.
+                // No size is passed, so the function will use the view's intrinsic size.
+                let image = await dashboardContent.renderAsImage()
                 
                 capturedImage = image
                 isRendering = false
