@@ -55,7 +55,7 @@ class HomeScreenViewModel: ObservableObject {
         timer?.cancel()
     }
 
-    func fetchData() {
+    func fetchAllData() {
         if isLoading {
             return
         }
@@ -76,6 +76,33 @@ class HomeScreenViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self.isLoading = false
             }
+        }
+    }
+
+    func fetchPrimaryData() {
+        // This function is for the initial, fast load.
+        // We only fetch the most critical data to display first.
+        if isLoading { return }
+        isLoading = true
+        error = nil
+        
+        Task {
+            await fetchSalesData()
+            DispatchQueue.main.async {
+                self.isLoading = false
+            }
+        }
+    }
+    
+    func fetchSecondaryData() {
+        // This fetches less critical data in the background
+        // so the main UI is already interactive.
+        Task {
+            async let ordersTask = fetchOrders()
+            async let receiptsTask = fetchPendingReceipts()
+            
+            _ = await ordersTask
+            _ = await receiptsTask
         }
     }
 

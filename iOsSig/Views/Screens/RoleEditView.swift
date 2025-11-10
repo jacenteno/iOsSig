@@ -22,9 +22,15 @@ struct RoleEditView: View {
                 }
             }
         }
+        .padding(.bottom, 80) // Padding to avoid FAB obstruction
         .navigationTitle("Editar Rol")
         .toolbar {
-            // El botón de guardar se ha eliminado porque los cambios son automáticos.
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Guardar") {
+                    viewModel.saveChanges()
+                    presentationMode.wrappedValue.dismiss()
+                }
+            }
         }
     }
 }

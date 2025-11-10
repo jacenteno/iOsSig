@@ -57,7 +57,8 @@ class SettingsManager: ObservableObject {
         "VIEW_HOME", "VIEW_PRODUCTS", "VIEW_SALES", "VIEW_COSTO", "VIEW_INVENTARIO",
         "VIEW_SALE_PRICES", "VIEW_PURCHASES", "VIEW_PEDIDOS", "VIEW_OFFLINE", "PRINT_LABELS",
         "VIEW_DASHBOARD", "EDIT_PRICES", "FULL_ACCESS", "VIEW_CLIENTS", "VIEW_DAVID",
-        "VIEW_FRONTERA", "VIEW_ORDERS_LIST", "EDIT_LABEL_FORMATS", "CREAR_PRODUCTO", "PEDIR_CLAVE_DASHBOARD", "VER_VENTA_HOME"
+        "VIEW_FRONTERA", "VIEW_ORDERS_LIST", "EDIT_LABEL_FORMATS", "CREAR_PRODUCTO", "PEDIR_CLAVE_DASHBOARD", "VER_VENTA_HOME",
+        "Ver_Ventas_en_Consulta_Producto", "Ver_Compras_en_Consulta_Producto", "Sincronizar_Productos"
     ].sorted()
 
     // @Published notifica a la UI de SwiftUI cuando un valor cambia

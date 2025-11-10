@@ -32,7 +32,6 @@ class RoleEditViewModel: ObservableObject {
         } else {
             permissions.insert(permission)
         }
-        saveChanges()
     }
 
     /// Guarda los cambios en el SettingsManager.

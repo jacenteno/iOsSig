@@ -32,6 +32,7 @@ struct SalesHistoryChartView: View {
 
     @State private var chartImage: UIImage?
     @State private var showShareSheet = false
+    @State private var isRendering = false // For loading indicator
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -44,10 +45,15 @@ struct SalesHistoryChartView: View {
                     .font(.title2.bold())
                 Spacer()
                 Button(action: shareChart) {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.title2)
-                        .foregroundColor(.secondary)
+                    if isRendering {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.title2)
+                            .foregroundColor(.secondary)
+                    }
                 }
+                .disabled(isRendering)
             }
             
             // Legend
@@ -109,17 +115,22 @@ struct SalesHistoryChartView: View {
     }
     
     private func shareChart() {
-        // Create a container for the chart to ensure it has a proper environment for rendering
-        let viewToCapture = chartBody
-            .padding()
-            .background(Color(.systemBackground))
+        Task {
+            isRendering = true
+            
+            let viewToCapture = chartBody
+                .padding()
+                .background(Color(.systemBackground))
 
-        // Render the container view to an image
-        self.chartImage = viewToCapture.asImage()
-        
-        // Present the share sheet only if the image was successfully created
-        if self.chartImage != nil {
-            self.showShareSheet = true
+            // Use the new async render function
+            let image = await viewToCapture.renderAsImage()
+            
+            self.chartImage = image
+            self.isRendering = false
+            
+            if self.chartImage != nil {
+                self.showShareSheet = true
+            }
         }
     }
 }

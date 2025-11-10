@@ -122,10 +122,12 @@ struct AppMenuView: View {
         Menu {
             // Sección de Herramientas
             Section(header: Text("Herramientas")) {
-                Button(action: { showSyncView = true }) {
-                    HStack {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                        Text("Sincronizar Productos")
+                if settings.hasPermission("Sincronizar_Productos") {
+                    Button(action: { showSyncView = true }) {
+                        HStack {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                            Text("Sincronizar Productos")
+                        }
                     }
                 }
             }

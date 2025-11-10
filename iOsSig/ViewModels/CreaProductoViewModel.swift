@@ -48,6 +48,7 @@ class CreaProductoViewModel: ObservableObject {
     }
 
     func crearProducto() {
+        print("CreaProductoViewModel: Invocado crearProducto() con código: \(codproducto)")
         guard validateFields() else { return }
 
         isLoading = true

@@ -12,6 +12,7 @@ struct DashboardScreen: View {
     @State private var capturedImage: UIImage?
     @State private var isShowingShareSheet = false
     @State private var contentHeight: CGFloat = .zero
+    @State private var isRendering = false // For loading indicator
 
     @State private var cardsAppeared = false
     @Namespace private var animation
@@ -399,19 +400,36 @@ struct DashboardScreen: View {
 
     private var shareButton: some View {
         Button(action: {
-            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-            impactFeedback.impactOccurred()
-            capturedImage = dashboardContent.asImage(size: CGSize(width: UIScreen.main.bounds.width, height: contentHeight))
-            isShowingShareSheet = true
+            Task {
+                isRendering = true
+                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                impactFeedback.impactOccurred()
+                
+                // Use the new async render function
+                let image = await dashboardContent.renderAsImage(size: CGSize(width: UIScreen.main.bounds.width, height: contentHeight))
+                
+                capturedImage = image
+                isRendering = false
+                
+                if capturedImage != nil {
+                    isShowingShareSheet = true
+                }
+            }
         }) {
-            Image(systemName: "square.and.arrow.up")
-                .font(.system(size: 16, weight: .semibold))
-                .padding(8)
-                .background(
-                    Circle()
-                        .fill(Color.accentColor.opacity(0.1))
-                )
+            if isRendering {
+                ProgressView()
+                    .padding(8)
+            } else {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 16, weight: .semibold))
+                    .padding(8)
+                    .background(
+                        Circle()
+                            .fill(Color.accentColor.opacity(0.1))
+                    )
+            }
         }
+        .disabled(isRendering)
     }
 
     private var proactiveAssistantButton: some View {

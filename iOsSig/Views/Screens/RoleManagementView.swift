@@ -12,6 +12,7 @@ struct RoleManagementView: View {
                 }
             }
         }
+        .padding(.bottom, 80) // Padding to avoid FAB obstruction
         .navigationTitle("Gestionar Roles")
         .onAppear {
             viewModel.loadRoles()

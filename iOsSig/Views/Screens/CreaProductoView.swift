@@ -13,105 +13,110 @@ struct CreaProductoView: View {
     }
 
     var body: some View {
+        let accentColor = Color(hex: settings.accentColor) ?? .accentColor
+
         NavigationView {
             ZStack {
                 Color(.systemGroupedBackground).edgesIgnoringSafeArea(.all)
                 
                 ScrollView {
-                    VStack(spacing: 20) {
-                        // Basic Information Section
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Información Básica")
-                                .font(.headline)
-                                .foregroundColor(.secondary)
-                            
-                            VStack(spacing: 16) {
+                    VStack(spacing: 24) {
+                        GroupBox {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Label("Información Básica", systemImage: "info.circle")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                
                                 CustomTextField(placeholder: "Código de Producto", text: $viewModel.codproducto, isDisabled: true)
                                 CustomTextField(placeholder: "Descripción", text: $viewModel.desproducto)
                                 CustomTextField(placeholder: "Referencia", text: $viewModel.codigobarra)
-                             //   CustomTextField(placeholder: "Código de Barra", text: $viewModel.referencia)
                             }
                         }
                         
-                        // Details Section
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Detalles")
-                                .font(.headline)
-                                .foregroundColor(.secondary)
-                            
-                            if viewModel.isFetchingDepartments {
-                                HStack {
-                                    Text("Departamento")
-                                        .foregroundColor(.secondary)
-                                    Spacer()
-                                    ProgressView()
+                        GroupBox {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Label("Detalles", systemImage: "list.bullet.rectangle")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                
+                                if viewModel.isFetchingDepartments {
+                                    HStack {
+                                        Text("Cargando departamentos...")
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        ProgressView()
+                                    }
+                                } else {
+                                    CustomIntPicker(title: "Departamento", selection: $viewModel.departamentoSeleccionado) {
+                                        ForEach(viewModel.departamentos, id: \.coddepartamento) { depto in
+                                            Text(depto.nomdepto.trimmingCharacters(in: .whitespacesAndNewlines)).tag(depto.coddepartamento as Int?)
+                                        }
+                                    }
+                                    .accentColor(accentColor)
                                 }
-                                .modifier(CustomSectionStyle())
-                            } else {
-                                CustomIntPicker(title: "Departamento", selection: $viewModel.departamentoSeleccionado) {
-                                    ForEach(viewModel.departamentos, id: \.coddepartamento) { depto in
-                                        Text(depto.nomdepto.trimmingCharacters(in: .whitespacesAndNewlines)).tag(depto.coddepartamento as Int?)
+                                
+                                CustomPicker(title: "Impuesto", selection: $viewModel.selectedTaxOption) {
+                                    ForEach(viewModel.taxOptions, id: \.self) { option in
+                                        Text(option).tag(option)
                                     }
                                 }
-                            }
-                            
-                            CustomPicker(title: "Impuesto", selection: $viewModel.selectedTaxOption) {
-                                ForEach(viewModel.taxOptions, id: \.self) { option in
-                                    Text(option).tag(option)
-                                }
+                                .accentColor(accentColor)
                             }
                         }
                         
-                        // Pricing Section
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Precios")
-                                .font(.headline)
-                                .foregroundColor(.secondary)
-                            
-                            CustomTextField(placeholder: "Precio de Venta", text: $viewModel.preciodeventa, keyboardType: .decimalPad)
+                        GroupBox {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Label("Precios", systemImage: "dollarsign.circle")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                
+                                CustomTextField(placeholder: "Precio de Venta", text: $viewModel.preciodeventa, keyboardType: .decimalPad)
+                            }
                         }
                         
-                        Spacer()
+                        Spacer(minLength: 100)
                     }
                     .padding()
                 }
                 
-                // Save Button Area
-                VStack {
-                    Spacer()
-                    // if settings.userRole.hasPermission("CREAR_PRODUCTO") {
-                    if settings.hasPermission("CREAR_PRODUCTO") {
-                        Button(action: {
-                            viewModel.crearProducto()
-                        }) {
-                            HStack {
+                // Floating Action Button (FAB)
+                if settings.hasPermission("CREAR_PRODUCTO") {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                viewModel.crearProducto()
+                            }) {
                                 if viewModel.isLoading {
                                     ProgressView()
                                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .frame(width: 56, height: 56)
                                 } else {
-                                    Image(systemName: "plus.circle.fill")
-                                    Text("Crear Producto")
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 24, weight: .semibold))
+                                        .foregroundColor(.white)
+                                        .frame(width: 56, height: 56)
                                 }
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.accentColor)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                            .shadow(radius: 5)
+                            .background(accentColor)
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 5)
+                            .padding(20)
+                            .disabled(viewModel.isLoading)
                         }
-                        .disabled(viewModel.isLoading)
-                        .padding()
                     }
                 }
             }
-            .navigationTitle("Crear Nuevo Producto")
+            .navigationTitle("Nuevo Producto")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancelar") {
                         presentationMode.wrappedValue.dismiss()
                     }
+                    .foregroundColor(accentColor)
                 }
             }
             .onAppear {

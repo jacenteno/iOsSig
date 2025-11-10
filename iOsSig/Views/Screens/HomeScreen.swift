@@ -58,11 +58,19 @@ struct HomeScreen: View {
                 .frame(maxWidth: .infinity) // <-- ADDED THIS LINE
             }
             .refreshable {
-                viewModel.fetchData()
+                viewModel.fetchAllData()
             }
         }
         .onAppear {
-            viewModel.fetchData()
+            // Fetch primary, most important data immediately
+            viewModel.fetchPrimaryData()
+            
+            // After a short delay, fetch the rest of the data in the background
+            Task {
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+                viewModel.fetchSecondaryData()
+            }
+
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                 headerAppeared = true
             }

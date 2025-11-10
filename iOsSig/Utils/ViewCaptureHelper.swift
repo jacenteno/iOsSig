@@ -1,4 +1,3 @@
-
 import SwiftUI
 
 // MARK: - Share Sheet Helper
@@ -14,30 +13,42 @@ struct ShareSheet: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
+
 // MARK: - View Snapshot Extension
 extension View {
-    /// Renders the view into a UIImage.
-    /// - Parameters:
-    ///   - size: The target size for the rendered image. If nil, the view's ideal size is used.
-    ///   - opaque: A Boolean value indicating whether the bitmap is opaque.
-    ///   - scale: The scale factor to apply to the bitmap.
-    /// - Returns: A UIImage of the rendered view.
-    func asImage(size: CGSize? = nil, opaque: Bool = false, scale: CGFloat = UIScreen.main.scale) -> UIImage? {
-        // 1. Create a UIHostingController to host the SwiftUI view.
+    /// Renders the view into a UIImage asynchronously, ensuring the view is properly rendered before capture.
+    @MainActor
+    func renderAsImage(size: CGSize? = nil) async -> UIImage? {
+        // 1. Create a hosting controller
         let controller = UIHostingController(rootView: self.edgesIgnoringSafeArea(.all))
-        
-        // 2. Determine the target size.
+
+        // 2. Determine the target size for rendering
         let targetSize = size ?? controller.view.intrinsicContentSize
+        
+        // Ensure the size is valid
+        guard targetSize.width > 0, targetSize.height > 0 else {
+            print("Warning: Attempted to render a view with zero size.")
+            return nil
+        }
         controller.view.bounds = CGRect(origin: .zero, size: targetSize)
         controller.view.backgroundColor = .clear
 
-        // 3. Create a renderer to capture the view.
-        let renderer = UIGraphicsImageRenderer(size: targetSize, format: .default())
+        // 3. Create a temporary window to host the view hierarchy
+        let window = UIWindow(frame: controller.view.bounds)
+        window.rootViewController = controller
+        window.makeKeyAndVisible()
         
-        // 4. Render the view's layer into a UIImage.
-        let image = renderer.image { _ in
+        // Allow the system a moment to handle layout and rendering
+        await Task.yield()
+
+        // 4. Render the view's layer into a UIImage
+        let renderer = UIGraphicsImageRenderer(size: controller.view.bounds.size)
+        let image = renderer.image { ctx in
             controller.view.drawHierarchy(in: controller.view.bounds, afterScreenUpdates: true)
         }
+        
+        // 5. Clean up the temporary window
+        window.isHidden = true
         
         return image
     }

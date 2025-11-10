@@ -90,7 +90,9 @@ class ProductCardViewModel: ObservableObject {
     }
 
     func fetchCompras(for product: Product, completion: @escaping (Bool) -> Void) {
-        guard let codigobarra = product.codigobarra else {
+        // BUG FIX: Changed from product.codigobarra to product.codproducto to use the correct identifier.
+        guard let productCode = product.codproducto?.trimmingCharacters(in: .whitespacesAndNewlines) else {
+            logger.warning("⚠️ fetchCompras falló: codproducto es nulo o vacío.")
             completion(false)
             return
         }
@@ -103,10 +105,10 @@ class ProductCardViewModel: ObservableObject {
         fetchingCompras = true
         Task {
             defer { self.fetchingCompras = false }
-            logger.info("🌐 Llamando a APIServiceCMD (a través de APIService) para obtener compras para: \(codigobarra)")
+            logger.info("🌐 Llamando a APIServiceCMD (a través de APIService) para obtener compras para: \(productCode)")
             do {
                 // APIService.getCitymallProduct returns Resultado, which contains 'compras'
-                let rawResultado = try await apiService.getCitymallProduct(barCode: codigobarra)
+                let rawResultado = try await apiService.getCitymallProduct(barCode: productCode)
                 self.citymallProd = rawResultado // Store the raw Resultado
                 completion(true)
             } catch {

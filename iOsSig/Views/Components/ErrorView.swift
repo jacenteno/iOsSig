@@ -2,69 +2,94 @@
 import SwiftUI
 
 struct ErrorView: View {
+    @EnvironmentObject var settings: SettingsManager
+    
     let errorMessage: String
     let retryAction: () -> Void
     @Binding var isShowingError: Bool
     var showSettings: Binding<Bool>?
 
     var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "wifi.exclamationmark")
-                .font(.system(size: 50))
-                .foregroundColor(.secondary)
+        let accentColor = Color(hex: settings.accentColor) ?? .accentColor
 
+        VStack(spacing: 24) {
+            Spacer()
+
+            // Icono
+            Image(systemName: "wifi.exclamationmark")
+                .font(.system(size: 60, weight: .light))
+                .foregroundColor(accentColor)
+                .padding()
+                .background(accentColor.opacity(0.1))
+                .clipShape(Circle())
+
+            // Mensaje
             VStack(spacing: 8) {
-                Text("Error de Conexión")
-                    .font(.title2)
-                    .fontWeight(.bold)
+                Text("Ocurrió un Error")
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
 
                 Text(errorMessage)
-                    .font(.body)
+                    .font(.system(size: 17, weight: .medium, design: .rounded))
                     .multilineTextAlignment(.center)
                     .foregroundColor(.secondary)
                     .padding(.horizontal)
             }
 
-            Button(action: {
-                isShowingError = false
-                retryAction()
-            }) {
-                Text("Reintentar")
-                    .fontWeight(.semibold)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.accentColor)
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
-            }
+            Spacer()
 
-            if let showSettings = showSettings {
+            // Botones de acción
+            VStack(spacing: 14) {
                 Button(action: {
                     isShowingError = false
-                    showSettings.wrappedValue = true
+                    retryAction()
                 }) {
-                    Text("Configuración")
+                    Text("Reintentar")
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.accentColor.opacity(0.1))
-                        .foregroundColor(.accentColor)
-                        .cornerRadius(12)
+                        .background(accentColor)
+                        .foregroundColor(.white)
+                        .cornerRadius(16)
                 }
+
+                if let showSettings = showSettings {
+                    Button(action: {
+                        isShowingError = false
+                        showSettings.wrappedValue = true
+                    }) {
+                        Text("Ir a Configuración")
+                            .fontWeight(.semibold)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(accentColor.opacity(0.15))
+                            .foregroundColor(accentColor)
+                            .cornerRadius(16)
+                    }
+                }
+                
+                Button(action: {
+                    isShowingError = false
+                }) {
+                    Text("Cerrar")
+                        .fontWeight(.semibold)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.top, 8)
             }
-            
-            Button(action: {
-                isShowingError = false
-            }) {
-                Text("Cerrar")
-                    .fontWeight(.semibold)
-            }
-            .padding(.top)
         }
         .padding(30)
-        .background(Color(UIColor.systemBackground))
-        .cornerRadius(20)
-        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
-        .padding()
     }
 }
+
+struct ErrorView_Previews: PreviewProvider {
+    static var previews: some View {
+        ErrorView(
+            errorMessage: "No se pudo conectar al servidor. Revisa tu conexión o la URL de la API.",
+            retryAction: {},
+            isShowingError: .constant(true),
+            showSettings: .constant(true)
+        )
+        .environmentObject(SettingsManager.shared)
+    }
+}
+

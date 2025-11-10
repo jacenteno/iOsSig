@@ -71,7 +71,7 @@ class HomeViewModel: ObservableObject {
 
     init() {
         self.apiService = APIService()
-        startTimer()
+        // startTimer() // Disabled to improve performance and prevent excessive background fetching. User can still pull-to-refresh.
     }
 
     deinit {

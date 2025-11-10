@@ -28,22 +28,23 @@ struct FronteraCardView: View {
     private var productHeaderView: some View {
         HStack(alignment: .top, spacing: 16) {
             // Product Image (if available)
-            if let imageUrlString = resultado.imagenproducto, let url = URL(string: imageUrlString) {
-                AsyncImage(url: url) {
-                    image in image.resizable()
-                } placeholder: {
-                    ProgressView()
-                }
-                .frame(width: 60, height: 60)
-                .cornerRadius(8)
-            } else {
-                Image(systemName: "shippingbox.fill")
-                    .font(.title)
-                    .frame(width: 60, height: 60)
-                    .background(Color.accentColor.opacity(0.1))
-                    .foregroundColor(.accentColor)
-                    .cornerRadius(8)
-            }
+            //
+           // if let imageUrlString = resultado.imagenproducto, let url = URL(string: imageUrlString) {
+           //     AsyncImage(url: url) {
+           //         image in image.resizable()
+           //     } placeholder: {
+           //         ProgressView()
+            //    }
+             //   .frame(width: 60, height: 60)
+             //   .cornerRadius(8)
+            //} else {
+            //    Image(systemName: "shippingbox.fill")
+            //        .font(.title)
+            //        .frame(width: 60, height: 60)
+            //        .background(Color.accentColor.opacity(0.1))
+            //        .foregroundColor(.accentColor)
+            //        .cornerRadius(8)
+           // }
 
             // Product Details
             VStack(alignment: .leading, spacing: 4) {
@@ -133,7 +134,7 @@ struct FronteraCardView: View {
                 }
             }
 
-            if resultado.ventas != nil {
+            if resultado.ventas != nil && settings.hasPermission("Ver_Ventas_en_Consulta_Producto") {
                 ActionGridButton(
                     icon: "chart.bar.fill",
                     title: "Ventas",
@@ -147,7 +148,7 @@ struct FronteraCardView: View {
                 }
             }
 
-            if resultado.compras != nil {
+            if resultado.compras != nil && settings.hasPermission("Ver_Compras_en_Consulta_Producto") {
                 ActionGridButton(
                     icon: "cart.fill",
                     title: "Compras",

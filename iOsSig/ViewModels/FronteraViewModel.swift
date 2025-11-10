@@ -19,16 +19,6 @@ class FronteraViewModel: ObservableObject {
     init(apiService: APIServiceCMF = APIServiceCMF(session: .shared)) {
         self.apiService = apiService
         logger.info("✨ FronteraViewModel inicializado")
-        
-        $searchQuery
-            .debounce(for: .milliseconds(800), scheduler: DispatchQueue.main)
-            .removeDuplicates()
-            .sink { [weak self] query in
-                if !query.isEmpty {
-                    self?.consultarCodigo()
-                }
-            }
-            .store(in: &cancellables)
     }
 
     func consultarCodigo() {

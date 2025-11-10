@@ -3,30 +3,57 @@ import SwiftUI
 import SwiftUI
 
 struct ErrorState: View {
+    @EnvironmentObject var settings: SettingsManager
+    
     let message: String
     let onRetry: () -> Void
     
     var body: some View {
-        VStack(spacing: 12) {
+        let accentColor = Color(hex: settings.accentColor) ?? .accentColor
+
+        VStack(spacing: 24) {
+            Spacer()
+            
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.largeTitle)
-                .foregroundColor(.orange)
-            Text("Error al Cargar Datos")
-                .font(.headline)
-                .fontWeight(.bold)
-            Text(message)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-            Button("Reintentar") {
-                onRetry()
+                .font(.system(size: 50, weight: .light))
+                .foregroundColor(.red)
+                .padding()
+                .background(Color.red.opacity(0.1))
+                .clipShape(Circle())
+
+            VStack(spacing: 8) {
+                Text("Ocurrió un Error")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                
+                Text(message)
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.red)
+            
+            Button(action: onRetry) {
+                Label("Reintentar", systemImage: "arrow.clockwise")
+                    .font(.headline)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(accentColor)
+                    .foregroundColor(.white)
+                    .clipShape(Capsule())
+            }
             .padding(.top)
+            
+            Spacer()
         }
         .padding()
-        .background(Color(UIColor.secondarySystemGroupedBackground))
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
+
+struct ErrorState_Previews: PreviewProvider {
+    static var previews: some View {
+        ErrorState(message: "No se pudo conectar al servidor. Por favor, revisa tu conexión a internet.", onRetry: {})
+            .environmentObject(SettingsManager.shared)
+    }
+}
+

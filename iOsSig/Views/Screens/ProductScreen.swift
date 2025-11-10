@@ -21,74 +21,90 @@ struct ProductScreen: View, CameraScannerViewDelegate {
     let filterOptions = ["Nombre", "Código", "Referencia"]
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Enhanced Search Bar
-            searchHeaderView
-                .padding(.horizontal)
-                .padding(.top, 8)
-            
-            // Filter Pills
-            if showFilters {
-                filterScrollView
+        let accentColor = Color(hex: settings.accentColor) ?? .accentColor
+
+        ZStack {
+            VStack(spacing: 0) {
+                // Enhanced Search Bar
+                searchHeaderView
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                
+                // Filter Pills
+                if showFilters {
+                    filterScrollView
+                }
+                
+                // Content Area
+                contentView
             }
-            
-            // Content Area
-            contentView
-        }
-        .frame(maxHeight: .infinity, alignment: .top)
-        .background(
-            LinearGradient(
-                colors: [Color(.systemBackground), Color(.systemGray6)],
-                startPoint: .top,
-                endPoint: .bottom
+            .tint(accentColor)
+            .frame(maxHeight: .infinity, alignment: .top)
+            .background(
+                LinearGradient(
+                    colors: [Color(.systemBackground), Color(.systemGray6)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
             )
-            .ignoresSafeArea()
-        )
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                toolbarButtons
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    toolbarButtons
+                }
             }
-        }
-        .sheet(isPresented: $isShowingScanner) {
-            CameraScannerView(delegate: self)
-        }
-        .sheet(isPresented: $showError) {
-            ErrorView(errorMessage: viewModel.errorMessage ?? "Error desconocido", retryAction: { viewModel.fetchProducts() }, isShowingError: $showError)
-        }
-        .alert("Producto no encontrado", isPresented: $viewModel.showCreateProductAlert) {
-            Button("Sí") {
-                print("ProductScreen: 'Sí' button tapped at \(Date())")
-                navigateToCreaProducto = true
+            .sheet(isPresented: $isShowingScanner) {
+                CameraScannerView(delegate: self)
             }
-            Button("No", role: .cancel) { }
-        } message: {
-            Text("El producto con el código \(viewModel.productNotFoundCode ?? "") no existe. ¿Desea crearlo?")
-        }
-        .sheet(isPresented: $navigateToCreaProducto) {
-            CreaProductoView(codigoDeReferencia: viewModel.productNotFoundCode)
-        }
-        .sheet(isPresented: $showOfflineSearch) {
-            NavigationView {
-                OfflineProductsView(isPresented: $showOfflineSearch)
+            .sheet(isPresented: $showError) {
+                ErrorView(errorMessage: viewModel.errorMessage ?? "Error desconocido", retryAction: { viewModel.fetchProducts() }, isShowingError: $showError)
             }
-            .accentColor(Color(hex: settings.accentColor) ?? .accentColor)
-        }
-        .onAppear {
-            if let productCode = settings.selectedProductCodeForSearch {
-                viewModel.selectedFilterType = "Código"
-                viewModel.searchQuery = productCode
-                viewModel.searchProductByCode()
-                settings.selectedProductCodeForSearch = nil
+            .sheet(isPresented: $navigateToCreaProducto) {
+                CreaProductoView(codigoDeReferencia: viewModel.productNotFoundCode)
             }
-        }
-        .onChange(of: settings.selectedProductCodeForSearch) { newValue in
-            print("DEBUG: ProductScreen.onChange(selectedProductCodeForSearch) triggered with: \(newValue ?? "nil")")
-            if let productCode = newValue {
-                viewModel.selectedFilterType = "Código"
-                viewModel.searchQuery = productCode
-                viewModel.searchProductByCode()
-                settings.selectedProductCodeForSearch = nil
+            .sheet(isPresented: $showOfflineSearch) {
+                NavigationView {
+                    OfflineProductsView(isPresented: $showOfflineSearch)
+                }
+                .accentColor(accentColor)
+            }
+            .onAppear {
+                if let productCode = settings.selectedProductCodeForSearch {
+                    viewModel.selectedFilterType = "Código"
+                    viewModel.searchQuery = productCode
+                    viewModel.searchProductByCode()
+                    settings.selectedProductCodeForSearch = nil
+                }
+            }
+            .onChange(of: settings.selectedProductCodeForSearch) { newValue in
+                print("DEBUG: ProductScreen.onChange(selectedProductCodeForSearch) triggered with: \(newValue ?? "nil")")
+                if let productCode = newValue {
+                    viewModel.selectedFilterType = "Código"
+                    viewModel.searchQuery = productCode
+                    viewModel.searchProductByCode()
+                    settings.selectedProductCodeForSearch = nil
+                }
+            }
+
+            // Custom Alert Overlay
+            if viewModel.showCreateProductAlert {
+                CustomAlertView(
+                    title: "Producto no encontrado",
+                    message: "El producto con el código \(viewModel.productNotFoundCode ?? "") no existe. ¿Desea crearlo?",
+                    primaryButtonTitle: "Sí",
+                    secondaryButtonTitle: "No",
+                    primaryAction: {
+                        viewModel.showCreateProductAlert = false
+                        // Delay presentation to avoid conflict with alert dismissal
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            navigateToCreaProducto = true
+                        }
+                    },
+                    secondaryAction: {
+                        viewModel.showCreateProductAlert = false
+                    }
+                )
             }
         }
     }
@@ -538,39 +554,41 @@ struct ProductCardView: View {
     
                         
     
-                        ActionGridButton(
-    
-                            icon: "chart.bar.fill",
-    
-                            title: "Ventas",
-    
-                            isSelected: cardViewModel.selectedTab == 1,
-    
-                            color: .accentColor
-    
-                        ) {
-                            if settings.desplegarVentasApiOld {
-                                cardViewModel.fetchCompras(for: product) { success in
-                                    if success {
-                                        if cardViewModel.selectedTab == 1 {
-                                            withAnimation { cardViewModel.showTabContent.toggle() }
-                                        } else {
-                                            withAnimation { 
-                                                cardViewModel.selectedTab = 1
-                                                cardViewModel.showTabContent = true
+                        if settings.hasPermission("Ver_Ventas_en_Consulta_Producto") {
+                            ActionGridButton(
+        
+                                icon: "chart.bar.fill",
+        
+                                title: "Ventas",
+        
+                                isSelected: cardViewModel.selectedTab == 1,
+        
+                                color: .accentColor
+        
+                            ) {
+                                if settings.desplegarVentasApiOld {
+                                    cardViewModel.fetchCompras(for: product) { success in
+                                        if success {
+                                            if cardViewModel.selectedTab == 1 {
+                                                withAnimation { cardViewModel.showTabContent.toggle() }
+                                            } else {
+                                                withAnimation { 
+                                                    cardViewModel.selectedTab = 1
+                                                    cardViewModel.showTabContent = true
+                                                }
                                             }
                                         }
                                     }
-                                }
-                            } else {
-                                cardViewModel.fetchVentas(for: product) { success in
-                                    if success {
-                                        if cardViewModel.selectedTab == 1 {
-                                            withAnimation { cardViewModel.showTabContent.toggle() }
-                                        } else {
-                                            withAnimation { 
-                                                cardViewModel.selectedTab = 1
-                                                cardViewModel.showTabContent = true
+                                } else {
+                                    cardViewModel.fetchVentas(for: product) { success in
+                                        if success {
+                                            if cardViewModel.selectedTab == 1 {
+                                                withAnimation { cardViewModel.showTabContent.toggle() }
+                                            } else {
+                                                withAnimation { 
+                                                    cardViewModel.selectedTab = 1
+                                                    cardViewModel.showTabContent = true
+                                                }
                                             }
                                         }
                                     }
@@ -579,7 +597,7 @@ struct ProductCardView: View {
                         }
     
                         
-                        if settings.desplegarComprasApiOld {
+                        if settings.desplegarComprasApiOld && settings.hasPermission("Ver_Compras_en_Consulta_Producto") {
                             ActionGridButton(
         
                                 icon: "cart.fill",

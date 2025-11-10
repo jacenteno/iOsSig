@@ -76,6 +76,12 @@ class APIServiceCMF {
             let decoder = JSONDecoder()
             decoder.keyDecodingStrategy = .convertFromSnakeCase
             let citymallResponse = try decoder.decode(CitymallResponse.self, from: data)
+            
+            // Dump the decoded object to the console for inspection
+            print("--- Decoded API Response (consultaCodigoBarra) ---")
+            dump(citymallResponse)
+            print("--------------------------------------------------")
+
             logger.info("✅ Response decodificada exitosamente")
             logger.debug("🎯 Resultado errorcode: \(citymallResponse.resultado.errorcode)")
             return citymallResponse
