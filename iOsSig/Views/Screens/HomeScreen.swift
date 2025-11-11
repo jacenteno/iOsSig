@@ -81,7 +81,7 @@ struct HomeScreen: View {
         .sheet(isPresented: $showError) {
             ErrorView(
                 errorMessage: viewModel.error ?? "Error desconocido",
-                retryAction: { viewModel.fetchData() },
+                retryAction: { viewModel.fetchAllData() },
                 isShowingError: $showError,
                 showSettings: $showSettings
             )
