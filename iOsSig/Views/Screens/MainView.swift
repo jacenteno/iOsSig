@@ -76,6 +76,7 @@ struct MainView: View {
                             }
                         }
                 }
+                .navigationViewStyle(.stack) // Force stack navigation style for iPad
                 .tabItem {
                     VStack {
                         Image(systemName: item.icon)
