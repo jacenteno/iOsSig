@@ -31,8 +31,15 @@ struct CameraScannerView: UIViewControllerRepresentable {
         func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
             if !didFindCode, let metadataObject = metadataObjects.first {
                 guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject else { return }
-                guard let stringValue = readableObject.stringValue else { return }
+                guard var stringValue = readableObject.stringValue else { return }
                 
+                // Handle UPC-A codes scanned as EAN-13
+                // A 12-digit UPC-A code is often read as a 13-digit EAN-13 code with a leading '0'.
+                // If the database expects the 12-digit code, we trim the leading zero.
+                if readableObject.type == .ean13 && stringValue.count == 13 && stringValue.hasPrefix("0") {
+                    stringValue = String(stringValue.dropFirst())
+                }
+
                 didFindCode = true // Set flag to true to prevent further scans
                 
                 AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
@@ -75,7 +82,7 @@ class ScannerViewController: UIViewController {
             captureSession.addOutput(metadataOutput)
 
             metadataOutput.setMetadataObjectsDelegate(delegate, queue: DispatchQueue.main)
-            metadataOutput.metadataObjectTypes = [.ean8, .ean13, .pdf417, .qr]
+            metadataOutput.metadataObjectTypes = [.ean8, .ean13, .pdf417, .qr, .upce]
         } else {
             failed()
             return
