@@ -64,6 +64,11 @@ struct ReferenceSearchView: View {
                                             Text(producto.codigobarra)
                                                 .font(.subheadline)
                                                 .foregroundColor(.secondary)
+                                            Text(producto.codproducto)
+                                                .font(.subheadline)
+                                                .foregroundColor(.secondary)
+                                            
+
                                         }
                                     }
                                 }

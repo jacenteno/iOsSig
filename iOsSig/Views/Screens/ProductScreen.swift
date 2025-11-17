@@ -156,7 +156,7 @@ struct ProductScreen: View, CameraScannerViewDelegate {
       .cornerRadius(12)
 
       // Action Buttons
-      HStack(spacing: 0) {
+      HStack {
         Button(action: {
           viewModel.searchProductByCode()
         }) {
@@ -166,7 +166,7 @@ struct ProductScreen: View, CameraScannerViewDelegate {
         .disabled(viewModel.searchQuery.isEmpty)
         .padding(10)
 
-        Divider().frame(height: 20)
+        Spacer()
 
         Button(action: {
           isShowingReferenceSearch = true
@@ -176,7 +176,7 @@ struct ProductScreen: View, CameraScannerViewDelegate {
         }
         .padding(10)
 
-        Divider().frame(height: 20)
+        Spacer()
 
         Button(action: {
           isShowingScanner = true
@@ -186,7 +186,7 @@ struct ProductScreen: View, CameraScannerViewDelegate {
         }
         .padding(10)
 
-        Divider().frame(height: 20)
+        Spacer()
 
         Button(action: {
           showOfflineSearch = true
@@ -196,7 +196,7 @@ struct ProductScreen: View, CameraScannerViewDelegate {
         }
         .padding(10)
 
-        Divider().frame(height: 20)
+        Spacer()
 
         Button(action: {
           viewModel.clearSearch()
@@ -206,6 +206,7 @@ struct ProductScreen: View, CameraScannerViewDelegate {
         }
         .padding(10)
       }
+      .padding(.horizontal) // Keep some padding for the edges
       .background(Color.accentColor)
       .foregroundColor(.white)
       .cornerRadius(12)

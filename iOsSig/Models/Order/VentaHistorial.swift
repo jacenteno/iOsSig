@@ -4,7 +4,7 @@ struct VentaHistorial: Codable {
   let anno: Int
   let mes: Int
   let ventas: Int
-  let salidas: Int
+  let salidas: Int?
   let titulo: String
   let keyAnnoMes: String
 
