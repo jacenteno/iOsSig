@@ -1,5 +1,5 @@
 import Foundation
 
 struct CouponResponse: Codable {
-    let cupon: Coupon
+  let cupon: Coupon
 }

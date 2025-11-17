@@ -1,21 +1,21 @@
 import Foundation
 
 struct OrderItemResponse: Codable, Equatable, Identifiable {
-    let product: ProductDetailResponse
-    let quantityUnits: Double
-    let quantityBoxes: Double
-    let quantityUnitsDispatched: Double
-    let quantityBoxesDispatched: Double
+  let product: ProductDetailResponse
+  let quantityUnits: Double
+  let quantityBoxes: Double
+  let quantityUnitsDispatched: Double
+  let quantityBoxesDispatched: Double
 
-    var id: Int {
-        product.indexProductos
-    }
+  var id: Int {
+    product.indexProductos
+  }
 
-    enum CodingKeys: String, CodingKey {
-        case product
-        case quantityUnits = "quantity_units"
-        case quantityBoxes = "quantity_boxes"
-        case quantityUnitsDispatched = "quantity_units_dispatched"
-        case quantityBoxesDispatched = "quantity_boxes_dispatched"
-    }
+  enum CodingKeys: String, CodingKey {
+    case product
+    case quantityUnits = "quantity_units"
+    case quantityBoxes = "quantity_boxes"
+    case quantityUnitsDispatched = "quantity_units_dispatched"
+    case quantityBoxesDispatched = "quantity_boxes_dispatched"
+  }
 }

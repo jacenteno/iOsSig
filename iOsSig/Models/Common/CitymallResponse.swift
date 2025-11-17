@@ -1,5 +1,5 @@
 import Foundation
 
 struct CitymallResponse: Codable {
-    let resultado: Resultado
+  let resultado: Resultado
 }

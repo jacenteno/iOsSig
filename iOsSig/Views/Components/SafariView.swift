@@ -1,14 +1,19 @@
-import SwiftUI
 import SafariServices
+import SwiftUI
 
 struct SafariView: UIViewControllerRepresentable {
-    let url: URL
+  let url: URL
 
-    func makeUIViewController(context: UIViewControllerRepresentableContext<SafariView>) -> SFSafariViewController {
-        return SFSafariViewController(url: url)
-    }
+  func makeUIViewController(context: UIViewControllerRepresentableContext<SafariView>)
+    -> SFSafariViewController
+  {
+    return SFSafariViewController(url: url)
+  }
 
-    func updateUIViewController(_ uiViewController: SFSafariViewController, context: UIViewControllerRepresentableContext<SafariView>) {
-        // No need to update the view controller
-    }
+  func updateUIViewController(
+    _ uiViewController: SFSafariViewController,
+    context: UIViewControllerRepresentableContext<SafariView>
+  ) {
+    // No need to update the view controller
+  }
 }

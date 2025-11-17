@@ -1,67 +1,67 @@
 import Foundation
 
 class APIServiceCliente {
-    private var settings: SettingsManager
+  private var settings: SettingsManager
 
-    init(settings: SettingsManager = .shared) {
-        self.settings = settings
+  init(settings: SettingsManager = .shared) {
+    self.settings = settings
+  }
+
+  func getCliente(valor: String) async throws -> ClienteResponse {
+    let baseUrl = settings.clientApiUrl
+    var components = URLComponents(string: "\(baseUrl)api/clientespuntos/")
+    components?.queryItems = [
+      URLQueryItem(name: "valor", value: valor)
+    ]
+
+    guard let url = components?.url else {
+      throw APIError.invalidURL
     }
 
-    func getCliente(valor: String) async throws -> ClienteResponse {
-        let baseUrl = settings.clientApiUrl
-        var components = URLComponents(string: "\(baseUrl)api/clientespuntos/")
-        components?.queryItems = [
-            URLQueryItem(name: "valor", value: valor)
-        ]
+    let (data, response) = try await URLSession.shared.data(from: url)
 
-        guard let url = components?.url else {
-            throw APIError.invalidURL
-        }
-
-        let (data, response) = try await URLSession.shared.data(from: url)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.serverError(statusCode: -1)
-        }
-
-        if httpResponse.statusCode == 404 {
-            throw APIError.clientNotFound
-        } else if httpResponse.statusCode != 200 {
-            throw APIError.serverError(statusCode: httpResponse.statusCode)
-        }
-
-        do {
-            let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .convertFromSnakeCase
-            let clienteResponse = try decoder.decode(ClienteResponse.self, from: data)
-            return clienteResponse
-        } catch {
-            throw APIError.decodingError(error)
-        }
+    guard let httpResponse = response as? HTTPURLResponse else {
+      throw APIError.serverError(statusCode: -1)
     }
 
-    func generateCoupon(promoId: Int, rutNumerico: String) async throws -> CouponResponse {
-        let baseUrl = settings.clientApiUrl
-        guard let url = URL(string: "\(baseUrl)api/coupon/\(promoId)/\(rutNumerico)/") else {
-            throw APIError.invalidURL
-        }
-
-        let (data, response) = try await URLSession.shared.data(from: url)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.serverError(statusCode: -1)
-        }
-        guard httpResponse.statusCode == 200 else {
-            throw APIError.serverError(statusCode: httpResponse.statusCode)
-        }
-
-        do {
-            let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .convertFromSnakeCase
-            let couponResponse = try decoder.decode(CouponResponse.self, from: data)
-            return couponResponse
-        } catch {
-            throw APIError.decodingError(error)
-        }
+    if httpResponse.statusCode == 404 {
+      throw APIError.clientNotFound
+    } else if httpResponse.statusCode != 200 {
+      throw APIError.serverError(statusCode: httpResponse.statusCode)
     }
+
+    do {
+      let decoder = JSONDecoder()
+      decoder.keyDecodingStrategy = .convertFromSnakeCase
+      let clienteResponse = try decoder.decode(ClienteResponse.self, from: data)
+      return clienteResponse
+    } catch {
+      throw APIError.decodingError(error)
+    }
+  }
+
+  func generateCoupon(promoId: Int, rutNumerico: String) async throws -> CouponResponse {
+    let baseUrl = settings.clientApiUrl
+    guard let url = URL(string: "\(baseUrl)api/coupon/\(promoId)/\(rutNumerico)/") else {
+      throw APIError.invalidURL
+    }
+
+    let (data, response) = try await URLSession.shared.data(from: url)
+
+    guard let httpResponse = response as? HTTPURLResponse else {
+      throw APIError.serverError(statusCode: -1)
+    }
+    guard httpResponse.statusCode == 200 else {
+      throw APIError.serverError(statusCode: httpResponse.statusCode)
+    }
+
+    do {
+      let decoder = JSONDecoder()
+      decoder.keyDecodingStrategy = .convertFromSnakeCase
+      let couponResponse = try decoder.decode(CouponResponse.self, from: data)
+      return couponResponse
+    } catch {
+      throw APIError.decodingError(error)
+    }
+  }
 }

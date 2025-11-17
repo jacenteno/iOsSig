@@ -1,11 +1,11 @@
 import Foundation
 
 struct ClienteResponse: Codable {
-    let cliente: Cliente
-    let activePromotions: [Promotion]?
+  let cliente: Cliente
+  let activePromotions: [Promotion]?
 
-    enum CodingKeys: String, CodingKey {
-        case cliente
-        case activePromotions = "active_promotions"
-    }
+  enum CodingKeys: String, CodingKey {
+    case cliente
+    case activePromotions = "active_promotions"
+  }
 }

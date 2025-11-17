@@ -1,6 +1,6 @@
 import Foundation
 
 struct SalesByHourItem: Decodable {
-    let transacciones: Int
-    let monto: Double
+  let transacciones: Int
+  let monto: Double
 }

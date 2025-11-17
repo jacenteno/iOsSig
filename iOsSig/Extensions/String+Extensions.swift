@@ -1,7 +1,5 @@
 import Foundation
 
-import Foundation
-
 extension String {
-    var isNotEmpty: Bool { !isEmpty }
+  var isNotEmpty: Bool { !isEmpty }
 }

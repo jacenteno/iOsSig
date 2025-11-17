@@ -1,18 +1,18 @@
-import Foundation
 import Combine
+import Foundation
 
 @MainActor
 class RoleManagementViewModel: ObservableObject {
-    @Published var roles: [String] = []
-    private var settings: SettingsManager
+  @Published var roles: [String] = []
+  private var settings: SettingsManager
 
-    init(settings: SettingsManager = .shared) {
-        self.settings = settings
-        loadRoles()
-    }
+  init(settings: SettingsManager = .shared) {
+    self.settings = settings
+    loadRoles()
+  }
 
-    func loadRoles() {
-        // Los roles se cargan de las claves del diccionario de permisos
-        self.roles = settings.rolePermissions.keys.sorted()
-    }
+  func loadRoles() {
+    // Los roles se cargan de las claves del diccionario de permisos
+    self.roles = settings.rolePermissions.keys.sorted()
+  }
 }

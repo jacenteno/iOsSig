@@ -1,9 +1,9 @@
 import Foundation
 
 struct CodigoBarra: Codable {
-    let codigoBarra: String
+  let codigoBarra: String
 
-    enum CodingKeys: String, CodingKey {
-        case codigoBarra = "CodigoBarra"
-    }
+  enum CodingKeys: String, CodingKey {
+    case codigoBarra = "CodigoBarra"
+  }
 }

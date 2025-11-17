@@ -1,37 +1,37 @@
-import Foundation
 import Combine
+import Foundation
 
 @MainActor
 class OfflineProductsViewModel: ObservableObject {
-    @Published var products: [Product] = []
-    @Published var searchText: String = ""
-    @Published var isLoading: Bool = false
+  @Published var products: [Product] = []
+  @Published var searchText: String = ""
+  @Published var isLoading: Bool = false
 
-    private let productRepository: ProductRepository
-    private var cancellables = Set<AnyCancellable>()
+  private let productRepository: ProductRepository
+  private var cancellables = Set<AnyCancellable>()
 
-    init(productRepository: ProductRepository = .shared) {
-        self.productRepository = productRepository
-        
-        $searchText
-            .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
-            .removeDuplicates()
-            .sink { [weak self] searchText in
-                self?.fetchProducts(filter: searchText)
-            }
-            .store(in: &cancellables)
-    }
+  init(productRepository: ProductRepository = .shared) {
+    self.productRepository = productRepository
 
-    func fetchProducts(filter: String) {
-        self.isLoading = true
-        Task {
-            let fetchedProducts = await productRepository.fetchLocalProducts(filter: filter)
-            self.products = fetchedProducts
-            self.isLoading = false
-        }
+    $searchText
+      .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
+      .removeDuplicates()
+      .sink { [weak self] searchText in
+        self?.fetchProducts(filter: searchText)
+      }
+      .store(in: &cancellables)
+  }
+
+  func fetchProducts(filter: String) {
+    self.isLoading = true
+    Task {
+      let fetchedProducts = await productRepository.fetchLocalProducts(filter: filter)
+      self.products = fetchedProducts
+      self.isLoading = false
     }
-    
-    func onAppear() {
-        fetchProducts(filter: "") // Cargar todos los productos inicialmente
-    }
+  }
+
+  func onAppear() {
+    fetchProducts(filter: "")  // Cargar todos los productos inicialmente
+  }
 }
