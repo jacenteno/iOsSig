@@ -20,7 +20,7 @@ struct MainView: View {
     let version =
       Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "N/A"
     let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "N/A"
-    return "Versión \(version) (Build \(build))"
+    return "V.\(version) (\(build))"
   }
   @State private var requestCode: String = "iOS CM"  // Placeholder for request code
 

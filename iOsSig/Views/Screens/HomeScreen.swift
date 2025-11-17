@@ -306,7 +306,7 @@ struct HomeScreen: View {
         .opacity(0.3)
 
       HStack(spacing: 20) {
-        Label("iOS 26", systemImage: "apps.iphone")
+        Label("iOS", systemImage: "apps.iphone")
           .font(.system(size: 14, weight: .medium))
 
         Divider()
@@ -324,9 +324,9 @@ struct HomeScreen: View {
 
         HStack(spacing: 6) {
           Image(systemName: "info.circle.fill")
-            .font(.system(size: 11))
-          Text("v\(version)")
-            .font(.system(size: 13, weight: .medium, design: .monospaced))
+            .font(.system(size: 10))
+          Text("\(version)")
+            .font(.system(size: 10, weight: .medium, design: .monospaced))
         }
       }
       .foregroundColor(.secondary)

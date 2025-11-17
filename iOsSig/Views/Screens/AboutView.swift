@@ -54,21 +54,21 @@ struct AboutView: View {
 
         // Links
         VStack(alignment: .leading, spacing: 15) {
-          Link(destination: URL(string: "https://www.example.com/terms")!) {
+          Link(destination: URL(string: "https://jacenteno.github.io")!) {
             HStack {
               Image(systemName: "doc.text.fill")
               Text("Términos de Servicio")
             }
             .foregroundColor(Color(hex: settings.accentColor) ?? .accentColor)
           }
-          Link(destination: URL(string: "https://www.example.com/privacy")!) {
+          Link(destination: URL(string: "https://jacenteno.github.io")!) {
             HStack {
               Image(systemName: "shield.lefthalf.filled")
               Text("Política de Privacidad")
             }
             .foregroundColor(Color(hex: settings.accentColor) ?? .accentColor)
           }
-          Link(destination: URL(string: "https://www.example.com")!) {
+          Link(destination: URL(string: "https://jacenteno.github.io")!) {
             HStack {
               Image(systemName: "safari.fill")
               Text("Visita nuestro sitio web")
