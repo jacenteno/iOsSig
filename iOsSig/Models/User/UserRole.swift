@@ -6,6 +6,7 @@ enum AppUserRole: String, CaseIterable, Codable {
   case ROL_2
   case ROL_3
   case ROL_4
+  case ROL_5 // ClienteQBuster
 
   var permissions: Set<String> {
     switch self {
@@ -18,14 +19,6 @@ enum AppUserRole: String, CaseIterable, Codable {
       return Set([
         "VIEW_HOME",
         "VIEW_PRODUCTS",
-        "VIEW_SALES",
-        "VIEW_COSTO",
-        "VIEW_INVENTARIO",
-        "VIEW_SALE_PRICES",
-        "VIEW_PURCHASES",
-        "VIEW_PEDIDOS",
-        "VIEW_OFFLINE",
-        "PRINT_LABELS",
       ])
     case .ROL_2:
       return Set([
@@ -37,6 +30,7 @@ enum AppUserRole: String, CaseIterable, Codable {
         "VIEW_PURCHASES",
         "VIEW_PEDIDOS",
         "PRINT_LABELS",
+        "CAN_RETRIEVE_QBUSTER_ORDER", // Cajero
       ])
     case .ROL_3:
       return Set([
@@ -67,6 +61,12 @@ enum AppUserRole: String, CaseIterable, Codable {
         "VIEW_HOME",
         "VIEW_FRONTERA",
       ])
+    case .ROL_5:
+        return Set([
+            "VIEW_HOME",
+            "VIEW_PRODUCTS",
+            "CAN_USE_QBUSTER", // ClienteQBuster
+        ])
     }
   }
 

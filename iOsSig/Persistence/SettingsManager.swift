@@ -59,6 +59,7 @@ class SettingsManager: ObservableObject {
     "VIEW_FRONTERA", "VIEW_ORDERS_LIST", "EDIT_LABEL_FORMATS", "CREAR_PRODUCTO",
     "PEDIR_CLAVE_DASHBOARD", "VER_VENTA_HOME",
     "Ver_Ventas_en_Consulta_Producto", "Ver_Compras_en_Consulta_Producto", "Sincronizar_Productos",
+    "CAN_USE_QBUSTER", "CAN_RETRIEVE_QBUSTER_ORDER",
   ].sorted()
 
   // @Published notifica a la UI de SwiftUI cuando un valor cambia
