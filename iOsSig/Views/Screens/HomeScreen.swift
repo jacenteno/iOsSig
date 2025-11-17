@@ -306,7 +306,7 @@ struct HomeScreen: View {
         .opacity(0.3)
 
       HStack(spacing: 20) {
-        Label("iOS Application", systemImage: "apps.iphone")
+        Label("iOS 26", systemImage: "apps.iphone")
           .font(.system(size: 14, weight: .medium))
 
         Divider()

@@ -16,7 +16,12 @@ struct MainView: View {
 
   // Estados para la navegación programática desde el menú
 
-  @State private var version: String = "1.0.71125-JC"  // Placeholder for app version
+  private var appVersion: String {
+    let version =
+      Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "N/A"
+    let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "N/A"
+    return "Versión \(version) (Build \(build))"
+  }
   @State private var requestCode: String = "iOS CM"  // Placeholder for request code
 
   // Define los items del TabView basados en los roles
@@ -31,7 +36,7 @@ struct MainView: View {
         TabItem(
           title: "Inicio", icon: "house.fill",
           view: AnyView(
-            HomeScreen(version: version, requestCode: requestCode, showSettings: $showSettings))))
+            HomeScreen(version: appVersion, requestCode: requestCode, showSettings: $showSettings))))
     }
     // if role.hasPermission("VIEW_DASHBOARD") { // Add Dashboard with permission check
     if settings.hasPermission("VIEW_DASHBOARD") {  // Add Dashboard with permission check
