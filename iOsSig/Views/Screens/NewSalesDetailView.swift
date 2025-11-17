@@ -15,7 +15,7 @@ struct NewSalesDetailView: View {
     let groupedData = Dictionary(grouping: ventas, by: { $0.keyAnnoMes })
       .mapValues { salesInMonth -> (sales: Double, returns: Double) in
         let totalSales = salesInMonth.reduce(0) { $0 + Double($1.ventas) }
-        let totalReturns = salesInMonth.reduce(0) { $0 + Double($1.salidas) }
+        let totalReturns = salesInMonth.reduce(0) { $0 + Double($1.salidas ?? 0) }
         return (sales: totalSales, returns: totalReturns)
       }
 
@@ -110,7 +110,7 @@ struct NewSaleDetailCard: View {
           .font(.subheadline)
           .foregroundColor(.secondary)
         Spacer()
-        Text("\(venta.salidas)")
+        Text("\(venta.salidas ?? 0)")
           .font(.subheadline)
           .fontWeight(.medium)
       }
